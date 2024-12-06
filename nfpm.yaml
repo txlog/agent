@@ -1,0 +1,32 @@
+name: "txlog"
+arch: "amd64"
+platform: "linux"
+version: "0.1.0"
+release: "1"
+epoch: "1"
+section: "default"
+priority: "extra"
+maintainer: "Rodrigo de Avila <me@rda.run>"
+summary: ""
+description: |
+  The Transaction Log project aims to track package history on RPM systems,
+  compiling data on the number of updates and installs. Designed to enhance
+  system reliability, this initiative collects and centralizes information,
+  providing valuable insights into the evolution of packages.
+
+  This package contains the Agent, which compiles transactional data and sends
+  it to a central server, enabling real-time monitoring and analytics. By
+  aggregating and processing package history, the Agent provides actionable
+  insights for system administrators to optimize their RPM-based
+vendor: "Rodrigo de Avila"
+homepage: "https://github.com/txlog"
+license: "MIT"
+contents:
+  - src: ./doc/txlog.1.gz
+    dst: /usr/share/man/man1/txlog.1.gz
+  - src: ./conf/txlog.yaml
+    dst: /etc/txlog.yaml
+    type: config|noreplace
+  - src: ./bin/txlog
+    dst: /usr/bin/txlog
+

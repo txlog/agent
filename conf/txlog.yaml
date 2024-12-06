@@ -1,0 +1,3 @@
+postgrest:
+  url: http://127.0.0.1:3000
+  jwt_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYXZuYWRtaW4ifQ.3erzgiSFNf4GWMibeusvoTbdEHr3wCEYoxfF9z-DPt4
