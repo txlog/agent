@@ -7,7 +7,6 @@ epoch: "1"
 section: "default"
 priority: "extra"
 maintainer: "Rodrigo de Avila <me@rda.run>"
-summary: ""
 description: |
   The Transaction Log project aims to track package history on RPM systems,
   compiling data on the number of updates and installs. Designed to enhance
