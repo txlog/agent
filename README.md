@@ -52,6 +52,12 @@ gpgcheck=0' | sudo tee /etc/yum.repos.d/goreleaser.repo
 sudo yum install -y nfpm
 ```
 
+### Pandoc
+
+```bash
+sudo dnf install -y pandoc
+```
+
 ### Development commands
 
 The `Makefile` contains all the necessary commands for development. You can run
