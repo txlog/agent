@@ -3,11 +3,14 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 	"strings"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/txlog/agent/util"
 )
 
@@ -59,14 +62,34 @@ var buildCmd = &cobra.Command{
 This command compiles all transactions of yum/dnf 'transaction' command, and
 sends them to the server so they can be queried later.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// * Compilação de transações (txlog build)
-		//   * Agente obtém `/etc/machine-id` e `hostname`
-		//   * Agente obtém lista de todas as transactions com `sudo dnf history --reverse list`
-		transactions, _ := getTransactions()
-		//   * Agente obtém lista de todas as transactions salvas no servidor, para este `machine-id`
-		//   * Agente compara as listas de transações, para ver quais não foram enviadas ao servidor
-		//   * Agente envia transações que não foram enviadas para o servidor, uma de cada vez, com dados extraídos de `sudo dnf history info ID`
-		fmt.Println(transactions)
+		fmt.Fprintf(os.Stdout, "Compiling host identification...\n")
+		machineId, _ := util.GetMachineId()
+		hostname, _ := util.GetHostname()
+
+		// * retrieves a list of all transactions saved on the server for this `machine-id`
+		savedTransactions, savedTransactionsCount, err := getSavedTransactions(machineId, hostname)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error retrieving saved transactions: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Println(savedTransactions)
+		fmt.Println(savedTransactionsCount)
+
+		// * compares the transaction lists to determine which transactions have not been sent to the server
+		// fmt.Fprintf(os.Stdout, "Compiling transaction data...\n")
+		// _, count, err := getTransactions(machineId, hostname)
+		// if err != nil {
+		// 	fmt.Fprintf(os.Stderr, "Error retrieving transactions: %v\n", err)
+		// 	os.Exit(1)
+		// }
+
+		// * sends the unsent transactions to the server, one at a time, with data extracted from `sudo dnf history info ID`
+		//    * The sending of the transaction and its details needs to be atomic
+
+		// fmt.Println(transactions)
+
+		// fmt.Fprintf(os.Stdout, "Done. %d transactions processed, %d transactions sent to server.\n", count, 0)
 
 	},
 }
@@ -75,10 +98,30 @@ func init() {
 	rootCmd.AddCommand(buildCmd)
 }
 
-func getTransactions() (string, error) {
+// getSavedTransactions retrieves a list of all transactions saved on the server for this `machine-id` and hostname.
+func getSavedTransactions(machineId, hostname string) (string, int, error) {
+	client := resty.New()
+
+	response, err := client.R().
+		SetQueryParams(map[string]string{
+			"machine_id": machineId,
+			"hostname":   hostname,
+		}).
+		SetHeader("Accept", "application/json").
+		SetAuthToken(viper.GetString("postgrest.jwt_token")).
+		Get(viper.GetString("postgrest.url") + "/transactions")
+
+	fmt.Println(string(response.Body()))
+
+	return "", 0, err
+
+}
+
+// getTransactionItems retrieves the details of all transaction entries.
+func getTransactions(machineId, hostname string) (string, int, error) {
 	out, err := exec.Command(util.PackageBinary(), "history", "--reverse", "list").Output()
 	if err != nil {
-		return "", err
+		return "", 0, err
 	}
 
 	output := string(out)
@@ -87,15 +130,15 @@ func getTransactions() (string, error) {
 
 	re := regexp.MustCompile(`\s*(\d+)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*`)
 	var entries []TransactionEntry
+	count := 0
+
 	for _, line := range lines {
 		if re.MatchString(line) {
 			matches := re.FindStringSubmatch(line)
 			details, err := getTransactionItems(strings.TrimSpace(matches[1]))
-			machineId, _ := util.GetMachineId()
-			hostname, _ := util.GetHostname()
 
 			if err != nil {
-				return "", err
+				return "", 0, err
 			}
 
 			entry := TransactionEntry{
@@ -109,16 +152,17 @@ func getTransactions() (string, error) {
 				Details:       details,
 			}
 			entries = append(entries, entry)
+			count++
 		}
 	}
 
 	jsonData, err := json.MarshalIndent(entries, "", "  ")
 	if err != nil {
 		fmt.Println("Erro ao converter para JSON:", err)
-		return "", err
+		return "", 0, err
 	}
 
-	return string(jsonData), nil
+	return string(jsonData), count, nil
 }
 
 func getTransactionItems(transaction_id string) (TransactionDetail, error) {

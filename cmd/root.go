@@ -56,5 +56,16 @@ func initConfig() {
 
 	if err := viper.ReadInConfig(); err != nil {
 		fmt.Fprintln(os.Stderr, "Error reading config file:", err.Error())
+		os.Exit(1)
+	}
+
+	if !viper.IsSet("postgrest.url") {
+		fmt.Fprintln(os.Stderr, "Error reading config file:", "postgrest.url was not set")
+		os.Exit(1)
+	}
+
+	if !viper.IsSet("postgrest.jwt_token") {
+		fmt.Fprintln(os.Stderr, "Error reading config file:", "postgrest.jwt_token was not set")
+		os.Exit(1)
 	}
 }
