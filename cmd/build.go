@@ -67,27 +67,25 @@ sends them to the server so they can be queried later.`,
 		hostname, _ := util.GetHostname()
 
 		// * retrieves a list of all transactions saved on the server for this `machine-id`
-		savedTransactions, savedTransactionsCount, err := getSavedTransactions(machineId, hostname)
+		savedTransactions, _, err := getSavedTransactions(machineId, hostname)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error retrieving saved transactions: %v\n", err)
 			os.Exit(1)
 		}
 
-		fmt.Println(savedTransactions)
-		fmt.Println(savedTransactionsCount)
-
 		// * compares the transaction lists to determine which transactions have not been sent to the server
-		// fmt.Fprintf(os.Stdout, "Compiling transaction data...\n")
-		// _, count, err := getTransactions(machineId, hostname)
-		// if err != nil {
-		// 	fmt.Fprintf(os.Stderr, "Error retrieving transactions: %v\n", err)
-		// 	os.Exit(1)
-		// }
+		fmt.Fprintf(os.Stdout, "Compiling transaction data...\n")
+		unsentTransactions, count, err := getUnsentTransactions(machineId, hostname, savedTransactions)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error retrieving transactions: %v\n", err)
+			os.Exit(1)
+		}
 
 		// * sends the unsent transactions to the server, one at a time, with data extracted from `sudo dnf history info ID`
 		//    * The sending of the transaction and its details needs to be atomic
 
-		// fmt.Println(transactions)
+		fmt.Println(unsentTransactions)
+		fmt.Println(count)
 
 		// fmt.Fprintf(os.Stdout, "Done. %d transactions processed, %d transactions sent to server.\n", count, 0)
 
@@ -99,26 +97,33 @@ func init() {
 }
 
 // getSavedTransactions retrieves a list of all transactions saved on the server for this `machine-id` and hostname.
-func getSavedTransactions(machineId, hostname string) (string, int, error) {
+func getSavedTransactions(machineId, hostname string) ([]TransactionEntry, int, error) {
 	client := resty.New()
 
+	var transactions []TransactionEntry
 	response, err := client.R().
 		SetQueryParams(map[string]string{
-			"machine_id": machineId,
-			"hostname":   hostname,
+			"machine_id": "eq." + machineId,
+			"hostname":   "eq." + hostname,
 		}).
 		SetHeader("Accept", "application/json").
 		SetAuthToken(viper.GetString("postgrest.jwt_token")).
+		SetResult(&transactions).
 		Get(viper.GetString("postgrest.url") + "/transactions")
 
-	fmt.Println(string(response.Body()))
+	if err != nil {
+		return nil, 0, err
+	}
 
-	return "", 0, err
+	if response.StatusCode() != 200 {
+		return nil, 0, fmt.Errorf("server returned status code %d", response.StatusCode())
+	}
 
+	return transactions, len(transactions), nil
 }
 
-// getTransactionItems retrieves the details of all transaction entries.
-func getTransactions(machineId, hostname string) (string, int, error) {
+// getUnsentTransactionItems retrieves the details of all transaction entries which have not been sent to the server.
+func getUnsentTransactions(machineId, hostname string, savedTransactions []TransactionEntry) (string, int, error) {
 	out, err := exec.Command(util.PackageBinary(), "history", "--reverse", "list").Output()
 	if err != nil {
 		return "", 0, err
@@ -135,24 +140,39 @@ func getTransactions(machineId, hostname string) (string, int, error) {
 	for _, line := range lines {
 		if re.MatchString(line) {
 			matches := re.FindStringSubmatch(line)
-			details, err := getTransactionItems(strings.TrimSpace(matches[1]))
+			transactionID := strings.TrimSpace(matches[1])
+			fmt.Fprintf(os.Stdout, "  #%s... ", transactionID)
 
-			if err != nil {
-				return "", 0, err
+			exists := false
+			for _, t := range savedTransactions {
+				if t.TransactionID == transactionID {
+					exists = true
+					break
+				}
 			}
 
-			entry := TransactionEntry{
-				TransactionID: strings.TrimSpace(matches[1]),
-				MachineID:     machineId,
-				Hostname:      hostname,
-				CommandLine:   strings.TrimSpace(matches[2]),
-				DateTime:      strings.TrimSpace(matches[3]),
-				Actions:       strings.TrimSpace(matches[4]),
-				Altered:       strings.TrimSpace(matches[5]),
-				Details:       details,
+			if !exists {
+				details, err := getTransactionItems(transactionID)
+				if err != nil {
+					return "", 0, err
+				}
+
+				entry := TransactionEntry{
+					TransactionID: transactionID,
+					MachineID:     machineId,
+					Hostname:      hostname,
+					CommandLine:   strings.TrimSpace(matches[2]),
+					DateTime:      strings.TrimSpace(matches[3]),
+					Actions:       strings.TrimSpace(matches[4]),
+					Altered:       strings.TrimSpace(matches[5]),
+					Details:       details,
+				}
+				entries = append(entries, entry)
+				count++
+				fmt.Fprintf(os.Stdout, "done.\n")
+			} else {
+				fmt.Fprintf(os.Stdout, "already sent. Skipping.\n")
 			}
-			entries = append(entries, entry)
-			count++
 		}
 	}
 
