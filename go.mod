@@ -5,7 +5,7 @@ go 1.22.7
 require github.com/fatih/color v1.18.0
 
 require (
-	github.com/go-resty/resty/v2 v2.16.2
+	github.com/go-resty/resty/v2 v2.16.3
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
 )
