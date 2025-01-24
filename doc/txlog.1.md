@@ -2,8 +2,8 @@
 title: txlog
 section: 1
 header: Package Transaction Log - Agent
-footer: txlog 0.1.0
-date: December 11, 2024
+footer: txlog 0.0.1
+date: January 25, 2025
 ---
 
 # NAME
@@ -38,23 +38,17 @@ into the evolution of packages.
 
 # CONFIGURATION FILE
 
-**/etc/txlog.conf**
-Normally `txlog` uses sane defaults, but if you want to
-activate any option or integration, go to this file, uncomment the section and
-modify it. Useful during development, since you can set another parameters for
-this environment.
+**/etc/txlog.yaml**
+Normally `txlog` uses sane defaults, but if you want to activate any option or
+integration, go to this file, uncomment the section and modify it. Useful during
+development, since you can set another parameters for this environment.
 
 # CONFIGURATION OPTIONS
 
-All data is sent to a PostgreSQL database, using a
-[PostgREST](https://postgrest.org) instance. The PostgREST address and
-authentication token can be set in the configuration file.
+All data is sent to the Transaction Log server.
 
 **url**
-: URL address of PostgREST instance
-
-**auth**
-: The JWT token for PostgREST instance, containing the database role on the payload
+: URL address of a Transaction Log server instance
 
 # QUERY FILTERS
 
