@@ -21,7 +21,12 @@ CREATE TABLE "transaction_items" (
   "machine_id" TEXT,
   "action" TEXT,
   "package" TEXT,
-  "repo" TEXT
+  "version" TEXT,
+  "release" TEXT,
+  "epoch" TEXT,
+  "arch" TEXT,
+  "repo" TEXT,
+  "from_repo" TEXT
 );
 
 ALTER TABLE "transaction_items" ADD FOREIGN KEY ("transaction_id", "machine_id") REFERENCES "transactions" ("transaction_id", "machine_id");
