@@ -8,10 +8,11 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/spf13/viper"
 )
 
 func DateConversion(data string) (string, error) {
-	t, err := time.Parse("Mon 2 Jan 15:04:05 2006", data)
+	t, err := time.Parse(viper.GetString("agent.date_format"), data)
 	if err != nil {
 		return "", err
 	}
