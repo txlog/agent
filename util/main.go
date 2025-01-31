@@ -16,7 +16,7 @@ func DateConversion(data string) (string, error) {
 		return "", err
 	}
 
-	dataFormatada := t.Format("2006-01-02 15:04:05")
+	dataFormatada := t.Format("2006-01-02T15:04:05Z07:00")
 
 	return dataFormatada, nil
 }
