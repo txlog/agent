@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -144,13 +143,6 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 					return 0, 0, err
 				}
 
-				packagesAltered, err := json.Marshal(details.PackagesAltered)
-				if err != nil {
-					return 0, 0, err
-				}
-
-				println(string(packagesAltered))
-
 				response, err := client.R().
 					SetHeader("Content-Type", "application/json").
 					SetBody(map[string]string{
@@ -167,7 +159,7 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 						"command_line":     details.CommandLine,
 						"comment":          details.Comment,
 						"scriptlet_output": strings.Join(details.ScriptletOutput, "\n"),
-						// "items":            string(packagesAltered),
+						// "items":            details.PackagesAltered,
 					}).
 					Post(viper.GetString("server.url") + "/v1/transaction")
 
