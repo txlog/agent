@@ -145,7 +145,7 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 
 				response, err := client.R().
 					SetHeader("Content-Type", "application/json").
-					SetBody(map[string]string{
+					SetBody(map[string]interface{}{
 						"transaction_id":   transactionID,
 						"machine_id":       machineId,
 						"hostname":         hostname,
@@ -159,7 +159,7 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 						"command_line":     details.CommandLine,
 						"comment":          details.Comment,
 						"scriptlet_output": strings.Join(details.ScriptletOutput, "\n"),
-						// "items":            details.PackagesAltered,
+						"items":            details.PackagesAltered,
 					}).
 					Post(viper.GetString("server.url") + "/v1/transaction")
 
