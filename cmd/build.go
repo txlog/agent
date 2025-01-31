@@ -50,19 +50,19 @@ var buildCmd = &cobra.Command{
 This command compiles all transactions of yum/dnf 'transaction' command, and
 sends them to the server so they can be queried later.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Fprintf(os.Stdout, "Compiling host identification...\n")
+		fmt.Fprintf(os.Stdout, "Compiling host identification\n")
 		machineId, _ := util.GetMachineId()
 		hostname, _ := util.GetHostname()
 
 		// * retrieves a list of all transactions saved on the server for this `machine-id`
-		fmt.Fprintf(os.Stdout, "Retrieving saved transactions...\n")
+		fmt.Fprintf(os.Stdout, "Retrieving saved transactions\n")
 		savedTransactions, _, err := getSavedTransactions(machineId, hostname)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error retrieving saved transactions: %v\n", err)
 			os.Exit(1)
 		}
 
-		fmt.Fprintf(os.Stdout, "Compiling transaction data...\n")
+		fmt.Fprintf(os.Stdout, "Compiling transaction data\n")
 		// * compares the transaction lists to determine which transactions have not been sent to the server
 		// * sends the unsent transactions to the server, one at a time, with data extracted from `sudo dnf history info ID`
 		//    * The sending of the transaction and its details needs to be atomic
