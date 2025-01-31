@@ -14,7 +14,7 @@ clean:
 	@rm -rf doc/*.gz
 
 build:
-	@GOOS="linux" GOARCH="amd64" go build -o bin/txlog
+	@CGO_ENABLED=0 GOOS="linux" GOARCH="amd64" go build -ldflags="-s -w" -trimpath -o bin/txlog
 
 man:
 	@rm -f doc/txlog.1.gz
@@ -24,3 +24,4 @@ man:
 
 rpm:
 	@nfpm pkg --packager rpm --target ./bin/
+	@rm -f ./bin/txlog
