@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const txlogVersion = "0.0.1"
+const txlogVersion = "0.1"
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
