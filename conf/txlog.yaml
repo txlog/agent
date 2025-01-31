@@ -1,4 +1,4 @@
 agent:
-  date_format: Mon Jan 2 15:04:05 2006
+  date_format: Mon 2 Jan 2006 03:04:05 PM -07
 server:
   url: http://localhost:8080
