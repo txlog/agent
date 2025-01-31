@@ -11,7 +11,7 @@ import (
 )
 
 func DateConversion(data string) (string, error) {
-	t, err := time.Parse("Mon Jan 2 15:04:05 2006", data)
+	t, err := time.Parse("Mon 2 Jan 15:04:05 2006", data)
 	if err != nil {
 		return "", err
 	}
