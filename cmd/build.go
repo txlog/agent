@@ -14,18 +14,6 @@ import (
 	"github.com/txlog/agent/util"
 )
 
-// TransactionEntry represents a single transaction entry, as shown in the 'dnf history list' command.
-type TransactionEntry struct {
-	TransactionID string            `json:"transaction_id"`
-	MachineID     string            `json:"machine_id"`
-	Hostname      string            `json:"hostname"`
-	CommandLine   string            `json:"command_line"`
-	DateTime      string            `json:"date_time"`
-	Actions       string            `json:"actions"`
-	Altered       string            `json:"altered"`
-	Details       TransactionDetail `json:"details"`
-}
-
 // TransactionDetail represents a detailed transaction entry, as shown in the 'dnf history info' command.
 type TransactionDetail struct {
 	TransactionID   string    `json:"transaction_id"`
@@ -67,27 +55,24 @@ sends them to the server so they can be queried later.`,
 		hostname, _ := util.GetHostname()
 
 		// * retrieves a list of all transactions saved on the server for this `machine-id`
+		fmt.Fprintf(os.Stdout, "Retrieving saved transactions...\n")
 		savedTransactions, _, err := getSavedTransactions(machineId, hostname)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error retrieving saved transactions: %v\n", err)
 			os.Exit(1)
 		}
 
-		// * compares the transaction lists to determine which transactions have not been sent to the server
 		fmt.Fprintf(os.Stdout, "Compiling transaction data...\n")
-		unsentTransactions, count, err := getUnsentTransactions(machineId, hostname, savedTransactions)
+		// * compares the transaction lists to determine which transactions have not been sent to the server
+		// * sends the unsent transactions to the server, one at a time, with data extracted from `sudo dnf history info ID`
+		//    * The sending of the transaction and its details needs to be atomic
+		entriesProcessed, entriesSent, err := saveUnsentTransactions(machineId, hostname, savedTransactions)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error retrieving transactions: %v\n", err)
 			os.Exit(1)
 		}
 
-		// * sends the unsent transactions to the server, one at a time, with data extracted from `sudo dnf history info ID`
-		//    * The sending of the transaction and its details needs to be atomic
-
-		fmt.Println(unsentTransactions)
-		fmt.Println(count)
-
-		// fmt.Fprintf(os.Stdout, "Done. %d transactions processed, %d transactions sent to server.\n", count, 0)
+		fmt.Fprintf(os.Stdout, "Done. %d transactions processed, %d transactions sent to server.\n", entriesProcessed, entriesSent)
 
 	},
 }
@@ -96,37 +81,37 @@ func init() {
 	rootCmd.AddCommand(buildCmd)
 }
 
-// getSavedTransactions retrieves a list of all transactions saved on the server for this `machine-id` and hostname.
-func getSavedTransactions(machineId, hostname string) ([]TransactionEntry, int, error) {
+// getSavedTransactions retrieves the list of transactions saved on the server for the given machine ID.
+func getSavedTransactions(machineId, hostname string) ([]int, int, error) {
 	client := resty.New()
+	client.SetAllowGetMethodPayload(true)
 
-	var transactions []TransactionEntry
+	var transactions []int
 	response, err := client.R().
-		SetQueryParams(map[string]string{
-			"machine_id": "eq." + machineId,
-			"hostname":   "eq." + hostname,
+		SetHeader("Content-Type", "application/json").
+		SetBody(map[string]string{
+			"machine_id": machineId,
+			"hostname":   hostname,
 		}).
-		SetHeader("Accept", "application/json").
-		SetAuthToken(viper.GetString("postgrest.jwt_token")).
 		SetResult(&transactions).
-		Get(viper.GetString("postgrest.url") + "/transactions")
+		Get(viper.GetString("server.url") + "/v1/transaction")
 
 	if err != nil {
 		return nil, 0, err
 	}
 
 	if response.StatusCode() != 200 {
-		return nil, 0, fmt.Errorf("server returned status code %d", response.StatusCode())
+		return nil, 0, fmt.Errorf("server returned status code %d: %s", response.StatusCode(), response.String())
 	}
 
 	return transactions, len(transactions), nil
 }
 
-// getUnsentTransactionItems retrieves the details of all transaction entries which have not been sent to the server.
-func getUnsentTransactions(machineId, hostname string, savedTransactions []TransactionEntry) (string, int, error) {
+// saveUnsentTransactionItems sends the transaction details to the server.
+func saveUnsentTransactions(machineId, hostname string, savedTransactions []int) (int, int, error) {
 	out, err := exec.Command(util.PackageBinary(), "history", "--reverse", "list").Output()
 	if err != nil {
-		return "", 0, err
+		return 0, 0, err
 	}
 
 	output := string(out)
@@ -134,18 +119,20 @@ func getUnsentTransactions(machineId, hostname string, savedTransactions []Trans
 	lines = lines[2:]
 
 	re := regexp.MustCompile(`\s*(\d+)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*`)
-	var entries []TransactionEntry
-	count := 0
+	entriesProcessed := 0
+	entriesSent := 0
+
+	client := resty.New()
 
 	for _, line := range lines {
 		if re.MatchString(line) {
 			matches := re.FindStringSubmatch(line)
 			transactionID := strings.TrimSpace(matches[1])
-			fmt.Fprintf(os.Stdout, "  #%s... ", transactionID)
+			fmt.Fprintf(os.Stdout, "Transaction #%s", transactionID)
 
 			exists := false
 			for _, t := range savedTransactions {
-				if t.TransactionID == transactionID {
+				if fmt.Sprintf("%d", t) == transactionID {
 					exists = true
 					break
 				}
@@ -154,35 +141,54 @@ func getUnsentTransactions(machineId, hostname string, savedTransactions []Trans
 			if !exists {
 				details, err := getTransactionItems(transactionID)
 				if err != nil {
-					return "", 0, err
+					return 0, 0, err
 				}
 
-				entry := TransactionEntry{
-					TransactionID: transactionID,
-					MachineID:     machineId,
-					Hostname:      hostname,
-					CommandLine:   strings.TrimSpace(matches[2]),
-					DateTime:      strings.TrimSpace(matches[3]),
-					Actions:       strings.TrimSpace(matches[4]),
-					Altered:       strings.TrimSpace(matches[5]),
-					Details:       details,
+				packagesAltered, err := json.Marshal(details.PackagesAltered)
+				if err != nil {
+					return 0, 0, err
 				}
-				entries = append(entries, entry)
-				count++
-				fmt.Fprintf(os.Stdout, "done.\n")
+
+				println(string(packagesAltered))
+
+				response, err := client.R().
+					SetHeader("Content-Type", "application/json").
+					SetBody(map[string]string{
+						"transaction_id":  transactionID,
+						"machine_id":      machineId,
+						"hostname":        hostname,
+						"begin_time":      details.BeginTime,
+						"end_time":        details.EndTime,
+						"actions":         strings.TrimSpace(matches[4]),
+						"altered":         strings.TrimSpace(matches[5]),
+						"user":            details.User,
+						"return_code":     details.ReturnCode,
+						"release_version": details.Releasever,
+						"command_line":    strings.TrimSpace(matches[2]),
+						"comment":         details.Comment,
+						// "scriptlet_output": strings.Join(details.ScriptletOutput, " - "),
+						// "items":            string(packagesAltered),
+					}).
+					Post(viper.GetString("server.url") + "/v1/transaction")
+
+				if err != nil {
+					return 0, 0, err
+				}
+
+				if response.StatusCode() != 200 {
+					return 0, 0, fmt.Errorf("server returned status code %d: %s", response.StatusCode(), response.String())
+				}
+
+				entriesSent++
+				fmt.Fprintf(os.Stdout, " sent.\n")
 			} else {
-				fmt.Fprintf(os.Stdout, "already sent. Skipping.\n")
+				fmt.Fprintf(os.Stdout, " already sent. Skipping.\n")
 			}
+			entriesProcessed++
 		}
 	}
 
-	jsonData, err := json.MarshalIndent(entries, "", "  ")
-	if err != nil {
-		fmt.Println("Erro ao converter para JSON:", err)
-		return "", 0, err
-	}
-
-	return string(jsonData), count, nil
+	return entriesProcessed, entriesSent, nil
 }
 
 func getTransactionItems(transaction_id string) (TransactionDetail, error) {
