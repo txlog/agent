@@ -5,21 +5,23 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"time"
 
 	"github.com/fatih/color"
-	"github.com/spf13/viper"
+	"github.com/itlightning/dateparse"
 )
 
+// DateConversion takes a string date and converts it to a standardized format.
+// It accepts a string parameter 'data' containing a date.
+// Returns the converted date string and an error if the conversion fails.
 func DateConversion(data string) (string, error) {
-	t, err := time.Parse(viper.GetString("agent.date_format"), data)
+	t, err := dateparse.ParseLocal(data)
 	if err != nil {
 		return "", err
 	}
 
-	dataFormatada := t.Format("2006-01-02T15:04:05Z07:00")
+	formattedDate := t.Format("2006-01-02T15:04:05Z07:00")
 
-	return dataFormatada, nil
+	return formattedDate, nil
 }
 
 // GetMachineId reads the contents of /etc/machine-id file
