@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/spf13/cobra"
@@ -58,6 +59,7 @@ sends them to the server so they can be queried later.`,
 		savedTransactions, _, err := getSavedTransactions(machineId, hostname)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error retrieving saved transactions: %v\n", err)
+			saveExecution(false, machineId, hostname, err.Error(), 0, 0)
 			os.Exit(1)
 		}
 
@@ -68,9 +70,11 @@ sends them to the server so they can be queried later.`,
 		entriesProcessed, entriesSent, err := saveUnsentTransactions(machineId, hostname, savedTransactions)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error retrieving transactions: %v\n", err)
+			saveExecution(false, machineId, hostname, err.Error(), 0, 0)
 			os.Exit(1)
 		}
 
+		saveExecution(true, machineId, hostname, "", entriesProcessed, entriesSent)
 		fmt.Fprintf(os.Stdout, "Done. %d transactions processed, %d transactions sent to server.\n", entriesProcessed, entriesSent)
 
 	},
@@ -270,4 +274,30 @@ func getTransactionItems(transaction_id string) (TransactionDetail, error) {
 	transaction.ScriptletOutput = scriptletOutput
 
 	return transaction, nil
+}
+
+// saveExecution sends the execution details to the server.
+func saveExecution(success bool, machineId, hostname, details string, processed, sent int) error {
+	response, err := resty.New().R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(map[string]interface{}{
+			"machine_id":             machineId,
+			"hostname":               hostname,
+			"executed_at":            time.Now().Format("2006-01-02T15:04:05Z07:00"),
+			"details":                details,
+			"success":                success,
+			"transactions_processed": processed,
+			"transactions_sent":      sent,
+		}).
+		Post(viper.GetString("server.url") + "/v1/execution")
+
+	if err != nil {
+		return err
+	}
+
+	if response.StatusCode() != 200 {
+		return fmt.Errorf("server returned status code %d: %s", response.StatusCode(), response.String())
+	}
+
+	return nil
 }
