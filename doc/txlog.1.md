@@ -2,8 +2,8 @@
 title: txlog
 section: 1
 header: Package Transaction Log - Agent
-footer: txlog 0.1.3
-date: February 03, 2025
+footer: txlog 0.2
+date: February 08, 2025
 ---
 
 # NAME
@@ -13,7 +13,7 @@ yum / dnf transaction info.
 
 # SYNOPSIS
 
-**txlog** [*OPTION*]
+**txlog** [*COMMAND*]
 
 # DESCRIPTION
 
@@ -22,19 +22,22 @@ number of updates and installs. Designed to enhance system reliability, this
 initiative collects and centralizes information, providing valuable insights
 into the evolution of packages.
 
-# OPTIONS
+# COMMANDS
 
-**-b**, **\--build**
+**build**
 : Compile transaction info
 
-**-q**, **\--query**
+**completion**
+: Generate the autocompletion script for the specified shell
+
+**help**
+: You know what this option does
+
+**query**
 : List compiled transactions
 
-**-v**, **\--version**
+**version**
 : Show version number
-
-**-h**, **\--help**
-: You know what this option does
 
 # CONFIGURATION FILE
 
@@ -75,4 +78,4 @@ Submit bug reports online at
 # SEE ALSO
 
 Full documentation and sources at
-<https://github.com/txlog>
+<https://txlog.rda.run>
