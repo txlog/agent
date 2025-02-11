@@ -1,6 +1,6 @@
 module github.com/txlog/agent
 
-go 1.22.7
+go 1.24.0
 
 require github.com/fatih/color v1.18.0
 
@@ -8,6 +8,11 @@ require (
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
+)
+
+require (
+	github.com/rogpeppe/go-internal v1.10.0 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
 
 require (
