@@ -97,7 +97,7 @@ func getSavedTransactions(machineId, hostname string) ([]int, int, error) {
 			"hostname":   hostname,
 		}).
 		SetResult(&transactions).
-		Get(viper.GetString("server.url") + "/v1/transaction")
+		Get(viper.GetString("server.url") + "/v1/transaction_id")
 
 	if err != nil {
 		return nil, 0, err
