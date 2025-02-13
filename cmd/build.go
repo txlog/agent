@@ -97,7 +97,7 @@ func getSavedTransactions(machineId, hostname string) ([]int, int, error) {
 			"hostname":   hostname,
 		}).
 		SetResult(&transactions).
-		Get(viper.GetString("server.url") + "/v1/transaction_id")
+		Get(viper.GetString("server.url") + "/v1/transactions/ids")
 
 	if err != nil {
 		return nil, 0, err
@@ -165,7 +165,7 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 						"scriptlet_output": strings.Join(details.ScriptletOutput, "\n"),
 						"items":            details.PackagesAltered,
 					}).
-					Post(viper.GetString("server.url") + "/v1/transaction")
+					Post(viper.GetString("server.url") + "/v1/transactions")
 
 				if err != nil {
 					return 0, 0, err
@@ -289,7 +289,7 @@ func saveExecution(success bool, machineId, hostname, details string, processed,
 			"transactions_processed": processed,
 			"transactions_sent":      sent,
 		}).
-		Post(viper.GetString("server.url") + "/v1/execution")
+		Post(viper.GetString("server.url") + "/v1/executions")
 
 	if err != nil {
 		return err

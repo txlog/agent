@@ -12,19 +12,31 @@ import (
 )
 
 type Transaction struct {
-	TransactionID   string     `json:"transaction_id"`
-	MachineID       string     `json:"machine_id,omitempty"`
-	Hostname        string     `json:"hostname"`
-	BeginTime       *time.Time `json:"begin_time"`
-	EndTime         *time.Time `json:"end_time"`
-	Actions         string     `json:"actions"`
-	Altered         string     `json:"altered"`
-	User            string     `json:"user"`
-	ReturnCode      string     `json:"return_code"`
-	ReleaseVersion  string     `json:"release_version"`
-	CommandLine     string     `json:"command_line"`
-	Comment         string     `json:"comment"`
-	ScriptletOutput string     `json:"scriptlet_output"`
+	TransactionID   string            `json:"transaction_id"`
+	MachineID       string            `json:"machine_id,omitempty"`
+	Hostname        string            `json:"hostname"`
+	BeginTime       *time.Time        `json:"begin_time"`
+	EndTime         *time.Time        `json:"end_time"`
+	Actions         string            `json:"actions"`
+	Altered         string            `json:"altered"`
+	User            string            `json:"user"`
+	ReturnCode      string            `json:"return_code"`
+	ReleaseVersion  string            `json:"release_version"`
+	CommandLine     string            `json:"command_line"`
+	Comment         string            `json:"comment"`
+	ScriptletOutput string            `json:"scriptlet_output"`
+	Items           []TransactionItem `json:"items"`
+}
+
+type TransactionItem struct {
+	Action   string `json:"action"`
+	Name     string `json:"name"`
+	Version  string `json:"version"`
+	Release  string `json:"release"`
+	Epoch    string `json:"epoch"`
+	Arch     string `json:"arch"`
+	Repo     string `json:"repo"`
+	FromRepo string `json:"from_repo"`
 }
 
 // transactionsCmd represents the transactions command
@@ -83,7 +95,7 @@ func getTransactions(machineID string) ([]Transaction, int, error) {
 			"machine_id": machineID,
 		}).
 		SetResult(&transactions).
-		Get(viper.GetString("server.url") + "/v1/transaction")
+		Get(viper.GetString("server.url") + "/v1/transactions")
 
 	if err != nil {
 		return nil, 0, err

@@ -71,7 +71,7 @@ func getSavedExecutions(machineId, success string) ([]Execution, int, error) {
 			"success":    success,
 		}).
 		SetResult(&executions).
-		Get(viper.GetString("server.url") + "/v1/execution")
+		Get(viper.GetString("server.url") + "/v1/executions")
 
 	if err != nil {
 		return nil, 0, err

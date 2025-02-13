@@ -60,7 +60,7 @@ func getMachineIDs(hostname string) ([]MachineID, int, error) {
 			"hostname": hostname,
 		}).
 		SetResult(&machines).
-		Get(viper.GetString("server.url") + "/v1/machine_id")
+		Get(viper.GetString("server.url") + "/v1/machines/ids")
 
 	if err != nil {
 		return nil, 0, err
