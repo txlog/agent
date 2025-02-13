@@ -3,7 +3,7 @@ title: txlog
 section: 1
 header: Package Transaction Log - Agent
 footer: txlog 0.2
-date: February 08, 2025
+date: February 12, 2025
 ---
 
 # NAME
@@ -30,14 +30,31 @@ into the evolution of packages.
 **completion**
 : Generate the autocompletion script for the specified shell
 
+**executions**
+: List build executions
+
 **help**
 : You know what this option does
 
-**query**
+**items**
+: List transactions items
+
+**machine_id**
+: List the machine_id of the given hostname
+
+**transactions**
 : List compiled transactions
 
 **version**
-: Show version number
+: Show agent and server version number
+
+## FLAGS
+
+**--config**
+: config file (default is /etc/txlog.yaml)
+
+**--help**
+: help for txlog. Use "txlog [command] --help" for more information about a command
 
 # CONFIGURATION FILE
 
@@ -52,23 +69,6 @@ All data is sent to the Transaction Log server.
 
 **url**
 : URL address of a Transaction Log server instance
-
-# QUERY FILTERS
-
-You can pass filters to the **query** option to display the compiled
-transactions for a given host or transaction.
-
-**-q**
-: returns transaction list from the current machine
-
-**-q "machine_id: 123456789"**
-: returns transaction list from the machine in question
-
-**-q "machine_id: 123456789, transaction_id: 1"**
-: returns information from transaction `1`
-
-**-q "machine_id: 123456789, transaction_id: 1-5"**
-: returns information from transactions `1` through `5`
 
 # BUGS
 
