@@ -47,8 +47,8 @@ var buildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Compile transaction info",
 	Long: `
-This command compiles all transactions of yum/dnf 'transaction' command, and
-sends them to the server so they can be queried later.`,
+This command compiles all transactions listed on 'dnf history'
+command, and sends them to the server so they can be queried later.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Fprintf(os.Stdout, "Compiling host identification\n")
 		machineId, _ := util.GetMachineId()

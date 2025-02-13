@@ -21,10 +21,7 @@ type MachineID struct {
 var machineCmd = &cobra.Command{
 	Use:   "machine_id",
 	Short: "List the machine_id of the given hostname",
-	Long: `
-This command lists the machine_id of a given hostname. If no parameter is passed,
-it will display the machine_id of the current host. However, when a parameter is passed,
-you can consult the machine_id of other hosts.`,
+	Long:  `This command lists the machine_id of a given hostname.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		hostname, _ := cmd.Flags().GetString("hostname")
 

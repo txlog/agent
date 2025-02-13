@@ -15,13 +15,7 @@ import (
 var itemsCmd = &cobra.Command{
 	Use:   "items",
 	Short: "List transactions items",
-	Long: `
-This command lists transactions items already compiled by txlog.
-If no machine_id parameter is passed, it will display the items
-of the current host. However, when a parameter is passed, you can
-consult the items of other hosts. The same with the transaction_id
-parameter: if not passed, displays all items; otherwise, only the
-items of the specified transactions.`,
+	Long:  `This command lists transactions items already compiled by txlog agent.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		machineID, _ := cmd.Flags().GetString("machine_id")
 		transactionID, _ := cmd.Flags().GetString("transaction_id")
@@ -46,7 +40,7 @@ items of the specified transactions.`,
 			fmt.Println("")
 			fmt.Println("* Hostname         : " + transaction.Hostname)
 			fmt.Println("* Machine ID       : " + machineID)
-			fmt.Println("* Transaction ID   : " + transactionID)
+			fmt.Println("* Transaction ID   : " + transaction.TransactionID)
 			fmt.Println("* Begin Time       : " + transaction.BeginTime.Format(time.RFC3339))
 			fmt.Println("* End Time         : " + transaction.EndTime.Format(time.RFC3339))
 			fmt.Println("* Actions          : " + transaction.Actions)
@@ -112,5 +106,5 @@ func init() {
 	machineId, _ := util.GetMachineId()
 
 	itemsCmd.PersistentFlags().String("machine_id", machineId, "The machine ID, as returned by the 'cat /etc/machine-id' command")
-	itemsCmd.PersistentFlags().String("transaction_id", "", "The transaction ID to view. Can be a comma-separated list (1,2,3) or a range (1-3) of IDs")
+	itemsCmd.PersistentFlags().String("transaction_id", "", "The transaction ID to view. If not provided, the last transaction will be shown")
 }

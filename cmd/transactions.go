@@ -43,10 +43,7 @@ type TransactionItem struct {
 var transactionsCmd = &cobra.Command{
 	Use:   "transactions",
 	Short: "List compiled transactions",
-	Long: `
-This command lists transactions already executed by yum/dnf. By default, it
-displays transactions from the current host. However, when a parameter is passed,
-you can consult the transactions of other hosts.`,
+	Long:  `This command lists transactions already executed by yum/dnf.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		machineID, _ := cmd.Flags().GetString("machine_id")
 

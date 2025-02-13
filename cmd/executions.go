@@ -26,10 +26,7 @@ type Execution struct {
 var executionsCmd = &cobra.Command{
 	Use:   "executions",
 	Short: "List build executions",
-	Long: `
-This command lists build executions already made by txlog. If no parameter is passed,
-it will display the executions of the current host. However, when a parameter is passed,
-you can consult the executions of other hosts.`,
+	Long:  `This command lists build executions already made by txlog agent.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		machineID, _ := cmd.Flags().GetString("machine_id")
 		success, _ := cmd.Flags().GetString("success")
