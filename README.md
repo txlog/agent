@@ -16,6 +16,15 @@ analytics. By aggregating and processing package history, the Agent provides
 actionable insights for system administrators to optimize their RPM-based
 systems.
 
+> [!WARNING]
+> This repository is under active development and may introduce breaking changes at any time. Please note:
+>
+> - The codebase is evolving rapidly
+> - Breaking changes may occur between commits
+> - API stability is not guaranteed
+> - Regular updates are recommended to stay current
+> - Check the changelog before updating
+
 ## Installation
 
 ```bash
