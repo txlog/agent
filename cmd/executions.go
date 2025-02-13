@@ -42,7 +42,7 @@ you can consult the executions of other hosts.`,
 
 		if len(savedExecutions) > 0 {
 			fmt.Println("| ID | Host | Success | Executed | Processed | Sent | Details |")
-			fmt.Println("|-----|------|---------|----------|-----------|------|---------|")
+			fmt.Println("|----|------|---------|----------|-----------|------|---------|")
 		}
 
 		for _, exec := range savedExecutions {
