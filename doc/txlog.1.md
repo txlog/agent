@@ -2,8 +2,8 @@
 title: txlog
 section: 1
 header: Package Transaction Log - Agent
-footer: txlog 1.0
-date: February 13, 2025
+footer: txlog 1.1
+date: February 14, 2025
 ---
 
 # NAME
@@ -26,9 +26,6 @@ into the evolution of packages.
 
 **build**
 : Compile transaction info
-
-**completion**
-: Generate the autocompletion script for the specified shell
 
 **executions**
 : List build executions
