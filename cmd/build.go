@@ -84,7 +84,18 @@ func init() {
 	rootCmd.AddCommand(buildCmd)
 }
 
-// getSavedTransactions retrieves the list of transactions saved on the server for the given machine ID.
+// getSavedTransactions retrieves transaction IDs from a remote server for a given machine ID and hostname.
+// It makes an HTTP GET request to the configured server endpoint with the machine ID and hostname in the request body.
+//
+// Parameters:
+//   - machineId: string containing the unique identifier for the machine
+//   - hostname: string containing the hostname of the machine
+//
+// Returns:
+//   - []int: slice of transaction IDs retrieved from the server
+//   - int: number of transactions retrieved
+//   - error: nil if successful, otherwise contains error information
+//     Possible errors include network failures or non-200 HTTP status codes
 func getSavedTransactions(machineId, hostname string) ([]int, int, error) {
 	client := resty.New()
 	client.SetAllowGetMethodPayload(true)
@@ -110,7 +121,25 @@ func getSavedTransactions(machineId, hostname string) ([]int, int, error) {
 	return transactions, len(transactions), nil
 }
 
-// saveUnsentTransactionItems sends the transaction details to the server.
+// saveUnsentTransactions processes DNF transaction history and sends unsent transactions to a remote server.
+// It takes the machine ID, hostname, and a slice of previously saved transaction IDs as input.
+//
+// The function performs the following steps:
+// 1. Retrieves the DNF transaction history in reverse order
+// 2. Parses each transaction entry
+// 3. For transactions not previously saved:
+//   - Gets detailed transaction information
+//   - Sends the transaction data to the configured server endpoint
+//
+// Parameters:
+//   - machineId: string identifier for the machine
+//   - hostname: system hostname
+//   - savedTransactions: slice of previously processed transaction IDs to avoid duplication
+//
+// Returns:
+//   - int: total number of entries processed
+//   - int: number of new entries sent to server
+//   - error: any error encountered during execution
 func saveUnsentTransactions(machineId, hostname string, savedTransactions []int) (int, int, error) {
 	out, err := exec.Command(util.PackageBinary(), "history", "--reverse", "list").Output()
 	if err != nil {
@@ -205,7 +234,35 @@ func getTransactionItems(transaction_id string) (TransactionDetail, error) {
 	var packages []Package
 	var scriptletOutput []string
 	for _, line := range lines {
-		if reTransaction.MatchString(line) {
+		if rePackage.MatchString(line) {
+			matches := rePackage.FindStringSubmatch(line)
+			name, version, release, epoch, arch := util.SplitPackageName(strings.TrimSpace(matches[2]))
+			pkg := Package{
+				Action:  strings.TrimSpace(matches[1]),
+				Name:    name,
+				Version: version,
+				Release: release,
+				Epoch:   epoch,
+				Arch:    arch,
+				Repo:    strings.TrimSpace(matches[3]),
+			}
+			packages = append(packages, pkg)
+		} else if rePackageUpgraded.MatchString(line) {
+			matches := rePackageUpgraded.FindStringSubmatch(line)
+			name, version, release, epoch, arch := util.SplitPackageName(strings.TrimSpace(matches[2]))
+			pkg := Package{
+				Action:   strings.TrimSpace(matches[1]),
+				Name:     name,
+				Version:  version,
+				Release:  release,
+				Epoch:    epoch,
+				Arch:     arch,
+				FromRepo: strings.TrimSpace(matches[3]),
+			}
+			packages = append(packages, pkg)
+		} else if strings.HasPrefix(line, "  ") {
+			scriptletOutput = append(scriptletOutput, strings.TrimSpace(line))
+		} else if reTransaction.MatchString(line) {
 			matches := reTransaction.FindStringSubmatch(line)
 			key := strings.TrimSpace(matches[1])
 			value := strings.TrimSpace(matches[2])
@@ -239,34 +296,6 @@ func getTransactionItems(transaction_id string) (TransactionDetail, error) {
 			case "Comment":
 				transaction.Comment = value
 			}
-		} else if rePackage.MatchString(line) {
-			matches := rePackage.FindStringSubmatch(line)
-			name, version, release, epoch, arch := util.SplitPackageName(strings.TrimSpace(matches[2]))
-			pkg := Package{
-				Action:  strings.TrimSpace(matches[1]),
-				Name:    name,
-				Version: version,
-				Release: release,
-				Epoch:   epoch,
-				Arch:    arch,
-				Repo:    strings.TrimSpace(matches[3]),
-			}
-			packages = append(packages, pkg)
-		} else if rePackageUpgraded.MatchString(line) {
-			matches := rePackageUpgraded.FindStringSubmatch(line)
-			name, version, release, epoch, arch := util.SplitPackageName(strings.TrimSpace(matches[2]))
-			pkg := Package{
-				Action:   strings.TrimSpace(matches[1]),
-				Name:     name,
-				Version:  version,
-				Release:  release,
-				Epoch:    epoch,
-				Arch:     arch,
-				FromRepo: strings.TrimSpace(matches[3]),
-			}
-			packages = append(packages, pkg)
-		} else if strings.HasPrefix(line, "  ") {
-			scriptletOutput = append(scriptletOutput, strings.TrimSpace(line))
 		}
 	}
 
