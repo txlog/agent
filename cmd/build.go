@@ -217,6 +217,10 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 }
 
 func getTransactionItems(transaction_id string) (TransactionDetail, error) {
+	validInput := regexp.MustCompile(`^[a-zA-Z0-9_\-\./\\]+$`)
+	if !validInput.MatchString(transaction_id) {
+		return TransactionDetail{}, fmt.Errorf("invalid input")
+	}
 	out, err := exec.Command("dnf", "history", "info", transaction_id).Output()
 	if err != nil {
 		return TransactionDetail{}, err
