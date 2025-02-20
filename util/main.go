@@ -143,6 +143,10 @@ func PackageBinary() string {
 // Returns:
 //   - bool: true if binary is installed, false if not found
 func binaryInstalled(binaryName string) bool {
+	validBinary := regexp.MustCompile(`^[a-zA-Z0-9_\-\./\\]+$`)
+	if !validBinary.MatchString(binaryName) {
+		return false
+	}
 	out, _ := exec.Command("which", binaryName).CombinedOutput()
 	return !strings.Contains(string(out), "no "+binaryName+" in")
 }
