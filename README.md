@@ -82,10 +82,10 @@ The `Makefile` contains all the necessary commands for development. You can run
 
 To create the binary and distribute
 
-* `make clean`: remove compiled binaries and packages
-* `make build`: build a production-ready binary on `./bin` directory
-* `make man`: compile the `man txlog` manpage
-* `make rpm`: create new `.rpm` package
+- `make clean`: remove compiled binaries and packages
+- `make build`: build a production-ready binary on `./bin` directory
+- `make man`: compile the `man txlog` manpage
+- `make rpm`: create new `.rpm` package
 
 ## Contributing
 
