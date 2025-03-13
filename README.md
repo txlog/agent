@@ -40,6 +40,10 @@ To compile and send all transaction info:
 txlog build
 ```
 
+## 🪴 Project Activity
+
+![Alt](https://repobeats.axiom.co/api/embed/298f7dad0c28ebbcc34d7906ca99ec3c92fd3755.svg "Repobeats analytics image")
+
 ## Development
 
 To make changes on this project, you need:
