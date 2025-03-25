@@ -120,9 +120,14 @@ func PackageBinary() string {
 	// Read /etc/os-release line-by-line
 	releaseData, _ := os.ReadFile("/etc/os-release")
 	for _, line := range strings.Split(string(releaseData), "\n") {
-		if strings.Contains(line, "VERSION_ID=\"8") || strings.Contains(line, "VERSION_ID=\"9") {
-			binary = "dnf"
-			break
+		re := regexp.MustCompile(`VERSION_ID="([0-9]+)"`)
+		match := re.FindStringSubmatch(line)
+		if len(match) > 1 {
+			versionID := match[1]
+			if versionID >= "8" {
+				binary = "dnf"
+				break
+			}
 		}
 	}
 
