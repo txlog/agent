@@ -20,6 +20,8 @@ type Execution struct {
 	Details               string     `json:"details,omitempty"`
 	TransactionsProcessed int        `json:"transactions_processed,omitempty"`
 	TransactionsSent      int        `json:"transactions_sent,omitempty"`
+	AgentVersion          string     `json:"agent_version,omitempty"`
+	OS                    string     `json:"os,omitempty"`
 }
 
 // executionsCmd represents the executions command
@@ -38,19 +40,21 @@ var executionsCmd = &cobra.Command{
 		}
 
 		if len(savedExecutions) > 0 {
-			fmt.Println("| ID | Host | Success | Executed | Processed | Sent | Details |")
-			fmt.Println("|----|------|---------|----------|-----------|------|---------|")
+			fmt.Println("| ID | Host | Success | Executed | Processed | Sent | Details | Agent | OS |")
+			fmt.Println("|----|------|---------|----------|-----------|------|---------|-------|----|")
 		}
 
 		for _, exec := range savedExecutions {
-			fmt.Printf("| %s | %s | %v | %v | %v | %v | %v |\n",
+			fmt.Printf("| %s | %s | %v | %v | %v | %v | %v | %s | %s |\n",
 				exec.ExecutionID,
 				exec.Hostname,
 				exec.Success,
 				exec.ExecutedAt.Format(time.RFC3339),
 				exec.TransactionsProcessed,
 				exec.TransactionsSent,
-				exec.Details)
+				exec.Details,
+				exec.AgentVersion,
+				exec.OS)
 		}
 	},
 }

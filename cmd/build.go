@@ -311,6 +311,10 @@ func getTransactionItems(transaction_id string) (TransactionDetail, error) {
 
 // saveExecution sends the execution details to the server.
 func saveExecution(success bool, machineId, hostname, details string, processed, sent int) error {
+	err := util.ParseOSRelease()
+	if err != nil {
+		return fmt.Errorf("error while reading /etc/os-release file: %v", err)
+	}
 	response, err := resty.New().R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(map[string]interface{}{
@@ -321,6 +325,8 @@ func saveExecution(success bool, machineId, hostname, details string, processed,
 			"success":                success,
 			"transactions_processed": processed,
 			"transactions_sent":      sent,
+			"agent_version":          agentVersion,
+			"os":                     util.Release.PrettyName,
 		}).
 		Post(viper.GetString("server.url") + "/v1/executions")
 
