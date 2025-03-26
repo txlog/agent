@@ -66,13 +66,16 @@ name=GoReleaser
 baseurl=https://repo.goreleaser.com/yum/
 enabled=1
 gpgcheck=0' | sudo tee /etc/yum.repos.d/goreleaser.repo
-sudo yum install -y nfpm
+sudo dnf install -y nfpm
 ```
 
 ### Pandoc
 
 ```bash
-sudo dnf install -y pandoc
+wget https://github.com/jgm/pandoc/releases/download/3.6.4/pandoc-3.6.4-linux-amd64.tar.gz
+tar zxvf pandoc-3.6.4-linux-amd64.tar.gz
+sudo mv pandoc-3.6.4/bin/pandoc /usr/bin/pandoc
+rm -rf pandoc-3.6.4*
 ```
 
 ### Development commands
