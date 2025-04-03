@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/fatih/color"
@@ -120,11 +121,13 @@ func PackageBinary() string {
 	// Read /etc/os-release line-by-line
 	releaseData, _ := os.ReadFile("/etc/os-release")
 	for _, line := range strings.Split(string(releaseData), "\n") {
-		re := regexp.MustCompile(`VERSION_ID="([0-9]+)"`)
+		re := regexp.MustCompile(`VERSION_ID="([1-9][0-9]?)(?:\.[0-9]+)?"`)
 		match := re.FindStringSubmatch(line)
 		if len(match) > 1 {
 			versionID := match[1]
-			if versionID >= "8" {
+			color.Red(versionID)
+			vID, _ := strconv.Atoi(versionID)
+			if vID >= 8 {
 				binary = "dnf"
 				break
 			}
