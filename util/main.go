@@ -125,7 +125,6 @@ func PackageBinary() string {
 		match := re.FindStringSubmatch(line)
 		if len(match) > 1 {
 			versionID := match[1]
-			color.Red(versionID)
 			vID, _ := strconv.Atoi(versionID)
 			if vID >= 8 {
 				binary = "dnf"
