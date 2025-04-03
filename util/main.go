@@ -50,19 +50,18 @@ func GetMachineId() (string, error) {
 	return machineID, nil
 }
 
-// GetHostname retrieves the hostname of the system by reading the /etc/hostname file.
-// It returns the hostname as a string and any error encountered during the process.
-// The hostname is trimmed of leading/trailing whitespace before being returned.
-// If the file cannot be read, it returns an empty string and an error with details.
+// GetHostname returns the system hostname by executing the hostname command.
+// It uses the /usr/bin/hostname command to obtain the hostname and returns it as a string.
+// Returns an error if the hostname command execution fails.
 func GetHostname() (string, error) {
-	data, err := os.ReadFile("/etc/hostname")
+	out, err := exec.Command("/usr/bin/hostname").Output()
 	if err != nil {
-		return "", fmt.Errorf("error while reading /etc/hostname: %w", err)
+		return "", fmt.Errorf("error while executing hostname command: %w", err)
 	}
 
-	machineID := strings.TrimSpace(string(data))
+	hostname := strings.TrimSpace(string(out))
 
-	return machineID, nil
+	return hostname, nil
 }
 
 // SplitPackageName splits a RPM package name into its components.
