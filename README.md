@@ -32,6 +32,20 @@ sudo dnf localinstall -y https://rpm.rda.run/rpm-rda-run-1.0-1.noarch.rpm
 sudo dnf install -y txlog
 ```
 
+## Configuration
+
+You need to set your [Txlog Server](https://txlog.rda.run/docs/server) address
+on `/etc/txlog.yaml` file.
+
+```yaml
+server:
+  url: https://txlog-server.example.com:8080
+  # If your server requires basic authentication,
+  # uncomment and configure username and password below
+  # username: bob_tables
+  # password: correct-horse-battery-staple
+```
+
 ## Usage
 
 To compile and send all transaction info:
