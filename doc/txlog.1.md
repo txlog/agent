@@ -2,7 +2,7 @@
 title: txlog
 section: 1
 header: Package Transaction Log - Agent
-footer: txlog 1.2.4
+footer: txlog 1.3.0
 date: April 14, 2025
 ---
 
