@@ -75,6 +75,9 @@ var itemsCmd = &cobra.Command{
 func getItems(machineID, transactionID string) (Transaction, error) {
 	client := resty.New()
 	client.SetAllowGetMethodPayload(true)
+	if username := viper.GetString("server.username"); username != "" {
+		client.SetBasicAuth(username, viper.GetString("server.password"))
+	}
 
 	var transaction Transaction
 	response, err := client.R().

@@ -49,6 +49,9 @@ var machineCmd = &cobra.Command{
 func getMachineIDs(hostname string) ([]MachineID, int, error) {
 	client := resty.New()
 	client.SetAllowGetMethodPayload(true)
+	if username := viper.GetString("server.username"); username != "" {
+		client.SetBasicAuth(username, viper.GetString("server.password"))
+	}
 
 	var machines []MachineID
 	response, err := client.R().

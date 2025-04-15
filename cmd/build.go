@@ -101,14 +101,19 @@ func getSavedTransactions(machineId, hostname string) ([]int, int, error) {
 	client.SetAllowGetMethodPayload(true)
 
 	var transactions []int
-	response, err := client.R().
+	request := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(map[string]string{
 			"machine_id": machineId,
 			"hostname":   hostname,
 		}).
-		SetResult(&transactions).
-		Get(viper.GetString("server.url") + "/v1/transactions/ids")
+		SetResult(&transactions)
+
+	if username := viper.GetString("server.username"); username != "" {
+		request.SetBasicAuth(username, viper.GetString("server.password"))
+	}
+
+	response, err := request.Get(viper.GetString("server.url") + "/v1/transactions/ids")
 
 	if err != nil {
 		return nil, 0, err
@@ -176,7 +181,7 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 					return 0, 0, err
 				}
 
-				response, err := client.R().
+				request := client.R().
 					SetHeader("Content-Type", "application/json").
 					SetBody(map[string]interface{}{
 						"transaction_id":   transactionID,
@@ -193,8 +198,13 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 						"comment":          details.Comment,
 						"scriptlet_output": strings.Join(details.ScriptletOutput, "\n"),
 						"items":            details.PackagesAltered,
-					}).
-					Post(viper.GetString("server.url") + "/v1/transactions")
+					})
+
+				if username := viper.GetString("server.username"); username != "" {
+					request.SetBasicAuth(username, viper.GetString("server.password"))
+				}
+
+				response, err := request.Post(viper.GetString("server.url") + "/v1/transactions")
 
 				if err != nil {
 					return 0, 0, err
@@ -315,7 +325,8 @@ func saveExecution(success bool, machineId, hostname, details string, processed,
 	if err != nil {
 		return fmt.Errorf("error while reading /etc/os-release file: %v", err)
 	}
-	response, err := resty.New().R().
+	client := resty.New()
+	request := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(map[string]interface{}{
 			"machine_id":             machineId,
@@ -327,8 +338,13 @@ func saveExecution(success bool, machineId, hostname, details string, processed,
 			"transactions_sent":      sent,
 			"agent_version":          agentVersion,
 			"os":                     util.Release.PrettyName,
-		}).
-		Post(viper.GetString("server.url") + "/v1/executions")
+		})
+
+	if username := viper.GetString("server.username"); username != "" {
+		request.SetBasicAuth(username, viper.GetString("server.password"))
+	}
+
+	response, err := request.Post(viper.GetString("server.url") + "/v1/executions")
 
 	if err != nil {
 		return err

@@ -23,10 +23,15 @@ var versionCmd = &cobra.Command{
 		client.SetAllowGetMethodPayload(true)
 
 		var server ServerVersion
-		_, err := client.R().
+		req := client.R().
 			SetHeader("Content-Type", "application/json").
-			SetResult(&server).
-			Get(viper.GetString("server.url") + "/v1/version")
+			SetResult(&server)
+
+		if username := viper.GetString("server.username"); username != "" {
+			req.SetBasicAuth(username, viper.GetString("server.password"))
+		}
+
+		_, err := req.Get(viper.GetString("server.url") + "/v1/version")
 
 		if err == nil {
 			serverVersion = server.Version
