@@ -1,2 +1,6 @@
 server:
   url: http://localhost:8080
+  # If your server requires basic authentication,
+  # uncomment and configure username and password below
+  # username: bob_tables
+  # password: correct-horse-battery-staple
