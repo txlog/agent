@@ -50,9 +50,9 @@ var buildCmd = &cobra.Command{
 This command compiles all transactions listed on 'dnf history'
 command, and sends them to the server so they can be queried later.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Fprintf(os.Stdout, "Compiling host identification\n")
 		machineId, _ := util.GetMachineId()
 		hostname, _ := util.GetHostname()
+		fmt.Fprintf(os.Stdout, "Compiling host identification for %s\n", hostname)
 
 		// * retrieves a list of all transactions saved on the server for this `machine-id`
 		fmt.Fprintf(os.Stdout, "Retrieving saved transactions\n")
@@ -165,7 +165,6 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 		if re.MatchString(line) {
 			matches := re.FindStringSubmatch(line)
 			transactionID := strings.TrimSpace(matches[1])
-			fmt.Fprintf(os.Stdout, "Transaction #%s", transactionID)
 
 			exists := false
 			for _, t := range savedTransactions {
@@ -215,9 +214,7 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 				}
 
 				entriesSent++
-				fmt.Fprintf(os.Stdout, " sent.\n")
-			} else {
-				fmt.Fprintf(os.Stdout, " already sent. Skipping.\n")
+				fmt.Fprintf(os.Stdout, "Transaction #%s sent.\n", transactionID)
 			}
 			entriesProcessed++
 		}
