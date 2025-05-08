@@ -1,4 +1,13 @@
+# Agent configuration
+agent:
+  # Check on https://txlog.rda.run/agent/version
+  # if a new version of the agent is available
+  # when `txlog version` is run
+  check_version: true
+
+# Server configuration
 server:
+  # The URL of the txlog server to send logs to
   url: http://localhost:8080
   # If your server requires basic authentication,
   # uncomment and configure username and password below
