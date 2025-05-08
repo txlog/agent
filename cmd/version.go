@@ -24,7 +24,7 @@ var versionCmd = &cobra.Command{
 		fmt.Println("Agent version: " + agentVersion)
 		fmt.Println("Server version: " + serverVersion)
 
-		if latestAgentVersion != "" && latestAgentVersion != agentVersion {
+		if latestAgentVersion != "" && latestAgentVersion != "v"+agentVersion {
 			fmt.Println("")
 			fmt.Println("────────────────────────────────────────────────────────")
 			fmt.Println("  A new Txlog Agent version is available: " + latestAgentVersion)
