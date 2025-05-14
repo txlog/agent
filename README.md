@@ -75,7 +75,7 @@ source ~/.bashrc
 rm go1.24.2.linux-amd64.tar.gz
 ```
 
-### nFPM
+### nFPM and Goreleaser
 
 ```bash
 echo '[goreleaser]
@@ -83,7 +83,7 @@ name=GoReleaser
 baseurl=https://repo.goreleaser.com/yum/
 enabled=1
 gpgcheck=0' | sudo tee /etc/yum.repos.d/goreleaser.repo
-sudo dnf install -y nfpm
+sudo dnf install -y --exclude=goreleaser-pro goreleaser nfpm
 ```
 
 ### Pandoc
