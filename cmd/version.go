@@ -18,7 +18,7 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Show agent and server version number",
 	Run: func(cmd *cobra.Command, args []string) {
-		serverVersion := serverVersion()
+		serverVersion := GetServerVersion()
 		latestAgentVersion := LatestAgentVersion()
 
 		fmt.Println("Agent version: " + agentVersion)
@@ -39,12 +39,12 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 }
 
-// serverVersion retrieves the server version from the configured server URL.
+// ServerVersion retrieves the server version from the configured server URL.
 // It uses the resty library to make an HTTP GET request to the "/v1/version" endpoint.
 // If authentication is configured (username and password), it sets the Basic Auth header.
 // On success, it returns the server version string.
 // On failure (including network errors or invalid server response), it returns "unknown".
-func serverVersion() string {
+func GetServerVersion() string {
 	client := resty.New()
 	client.SetAllowGetMethodPayload(true)
 
