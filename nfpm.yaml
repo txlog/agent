@@ -20,6 +20,8 @@ description: |
 vendor: "Rodrigo de Avila"
 homepage: "https://txlog.rda.run"
 license: "MIT"
+depends:
+  - yum-utils
 contents:
   - src: ./doc/txlog.1.gz
     dst: /usr/share/man/man1/txlog.1.gz
