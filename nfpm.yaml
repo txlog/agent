@@ -16,7 +16,7 @@ description: |
   This package contains the Agent, which compiles transactional data and sends
   it to a central server, enabling real-time monitoring and analytics. By
   aggregating and processing package history, the Agent provides actionable
-  insights for system administrators to optimize their RPM-based
+  insights for system administrators to optimize their RPM-based systems.
 vendor: "Rodrigo de Avila"
 homepage: "https://txlog.rda.run"
 license: "MIT"
