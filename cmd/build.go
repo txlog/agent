@@ -228,7 +228,7 @@ func getTransactionItems(transaction_id string) (TransactionDetail, error) {
 	if !validInput.MatchString(transaction_id) {
 		return TransactionDetail{}, fmt.Errorf("invalid input")
 	}
-	out, err := exec.Command("dnf", "history", "info", transaction_id).Output()
+	out, err := exec.Command(util.PackageBinary(), "history", "info", transaction_id).Output()
 	if err != nil {
 		return TransactionDetail{}, err
 	}
@@ -322,20 +322,37 @@ func saveExecution(success bool, machineId, hostname, details string, processed,
 	if err != nil {
 		return fmt.Errorf("error while reading /etc/os-release file: %v", err)
 	}
+
+	// * retrieves the server version
+	serverVersion := GetServerVersion()
+
+	body := map[string]interface{}{
+		"machine_id":             machineId,
+		"hostname":               hostname,
+		"executed_at":            time.Now().Format("2006-01-02T15:04:05Z07:00"),
+		"details":                details,
+		"success":                success,
+		"transactions_processed": processed,
+		"transactions_sent":      sent,
+		"agent_version":          agentVersion,
+		"os":                     util.Release.PrettyName,
+	}
+
+	if serverVersion != "unknown" && serverVersion >= "1.8.0" {
+		needsRestarting, reason, err := util.NeedsRestarting()
+		if err != nil {
+			body["needs_restarting"] = false
+			body["restarting_reason"] = err
+		} else {
+			body["needs_restarting"] = needsRestarting
+			body["restarting_reason"] = reason
+		}
+	}
+
 	client := resty.New()
 	request := client.R().
 		SetHeader("Content-Type", "application/json").
-		SetBody(map[string]interface{}{
-			"machine_id":             machineId,
-			"hostname":               hostname,
-			"executed_at":            time.Now().Format("2006-01-02T15:04:05Z07:00"),
-			"details":                details,
-			"success":                success,
-			"transactions_processed": processed,
-			"transactions_sent":      sent,
-			"agent_version":          agentVersion,
-			"os":                     util.Release.PrettyName,
-		})
+		SetBody(body)
 
 	if username := viper.GetString("server.username"); username != "" {
 		request.SetBasicAuth(username, viper.GetString("server.password"))
