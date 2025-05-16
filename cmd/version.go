@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-const agentVersion = "1.5.0"
+const agentVersion = "1.5.1"
 
 type ServerVersion struct {
 	Version string `json:"version"`
