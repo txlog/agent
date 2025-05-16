@@ -339,21 +339,15 @@ func saveExecution(success bool, machineId, hostname, details string, processed,
 	}
 
 	if serverVersion != "unknown" && serverVersion >= "1.8.0" {
-		needsRestarting, reason, err := util.NeedsRestarting()
-		if err != nil {
-			body["needs_restarting"] = false
-			body["restarting_reason"] = err
-		} else {
-			body["needs_restarting"] = needsRestarting
-			body["restarting_reason"] = reason
-		}
+		needsRestarting, reason := util.NeedsRestarting()
+		body["needs_restarting"] = needsRestarting
+		body["restarting_reason"] = reason
 	}
 
 	client := resty.New()
 	request := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(body)
-
 	if username := viper.GetString("server.username"); username != "" {
 		request.SetBasicAuth(username, viper.GetString("server.password"))
 	}
