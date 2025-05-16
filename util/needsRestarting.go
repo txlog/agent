@@ -1,6 +1,7 @@
 package util
 
 import (
+	"bytes"
 	"os/exec"
 	"strings"
 )
@@ -13,22 +14,25 @@ import (
 // Returns:
 //   - bool: true if system needs restarting, false otherwise
 //   - string: the complete output message from needs-restarting command
-//   - error: any error encountered while executing the command
 //
 // The function parses the command output looking for the specific phrase
 // "Reboot should not be necessary". If this phrase is found, it indicates
 // no restart is needed.
-func NeedsRestarting() (bool, string, error) {
-	out, err := exec.Command(PackageBinary(), "needs-restarting", "-r").Output()
-	if err != nil {
-		return false, "", err
-	}
+func NeedsRestarting() (bool, string) {
+	cmd := exec.Command(PackageBinary(), "needs-restarting", "-r")
 
-	result := strings.TrimSpace(string(out))
+	var stdout bytes.Buffer
+	cmd.Stdout = &stdout
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	_ = cmd.Run()
+	result := stdout.String() + stderr.String()
 
 	if strings.Contains(result, "Reboot should not be necessary") {
-		return false, result, nil
+		return false, result
 	} else {
-		return true, result, nil
+		return true, result
 	}
 }
