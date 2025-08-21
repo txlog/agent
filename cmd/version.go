@@ -21,16 +21,13 @@ var versionCmd = &cobra.Command{
 		serverVersion := GetServerVersion()
 		latestAgentVersion := LatestAgentVersion()
 
-		fmt.Println("Agent version: " + agentVersion)
-		fmt.Println("Server version: " + serverVersion)
+		fmt.Println("Txlog Agent v" + agentVersion)
+		fmt.Println("Txlog Server v" + serverVersion)
 
 		if latestAgentVersion != "" && latestAgentVersion != "v"+agentVersion {
 			fmt.Println("")
-			fmt.Println("────────────────────────────────────────────────────────")
-			fmt.Println("  A new Txlog Agent version is available: " + latestAgentVersion)
-			fmt.Println("  Go to https://txlog.rda.run/agent/latest for details")
-			fmt.Println("────────────────────────────────────────────────────────")
-			fmt.Println("")
+			fmt.Println("Your version of Txlog Agent is out of date! The latest version")
+			fmt.Println("is " + latestAgentVersion + ". Go to https://txlog.rda.run/agent/latest for details.")
 		}
 	},
 }
