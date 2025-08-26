@@ -25,7 +25,7 @@ vet:
 
 .PHONY: build
 build:
-	@CGO_ENABLED=0 GOOS="linux" GOARCH="amd64" go build -ldflags="-s -w -extldflags=-static" -trimpath -o bin/txlog
+	@CGO_ENABLED=0 GOOS="linux" GOARCH="amd64" GOAMD64="v2" go build -ldflags="-s -w -extldflags=-static" -trimpath -o bin/txlog
 
 .PHONY: man
 man:
