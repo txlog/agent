@@ -57,4 +57,12 @@ func initConfig() {
 		fmt.Fprintln(os.Stderr, "Error reading config file:", "server.url was not set")
 		os.Exit(1)
 	}
+
+	// If API key is configured, validate server version compatibility
+	if viper.IsSet("server.api_key") && viper.GetString("server.api_key") != "" {
+		if err := ValidateServerVersionForAPIKey(); err != nil {
+			fmt.Fprintln(os.Stderr, "API key compatibility error:", err.Error())
+			os.Exit(1)
+		}
+	}
 }

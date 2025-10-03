@@ -5,6 +5,7 @@ go 1.24.3
 require github.com/fatih/color v1.18.0
 
 require (
+	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.21.0
