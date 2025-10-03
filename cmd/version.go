@@ -76,12 +76,17 @@ func GetServerVersionWithError() (string, error) {
 		if resp.StatusCode() == 401 {
 			return "", &ServerVersionError{
 				StatusCode: 401,
-				Message:    "authentication failed: invalid or revoked API key",
+				Message:    "authentication failed: invalid credentials (API key or username/password)",
 			}
+		}
+		// Truncate response body to first 100 characters to avoid leaking sensitive details
+		safeBody := resp.String()
+		if len(safeBody) > 100 {
+			safeBody = safeBody[:100] + "..."
 		}
 		return "", &ServerVersionError{
 			StatusCode: resp.StatusCode(),
-			Message:    fmt.Sprintf("server returned status %d: %s", resp.StatusCode(), resp.String()),
+			Message:    fmt.Sprintf("server returned status %d: %s", resp.StatusCode(), safeBody),
 		}
 	}
 
@@ -134,7 +139,7 @@ func ValidateServerVersionForAPIKey() error {
 	if err != nil {
 		// Check if it's an authentication error
 		if serverErr, ok := err.(*ServerVersionError); ok {
-			return fmt.Errorf("%s", serverErr.Message)
+			return serverErr
 		}
 		return err
 	}
@@ -151,7 +156,7 @@ func ValidateServerVersionForAPIKey() error {
 	}
 
 	// Minimum version required for API key support
-	minVersion, _ := semver.NewVersion("1.14.0")
+	minVersion := semver.MustParse("1.14.0")
 
 	// Check if server version is compatible
 	if sv.LessThan(minVersion) {
