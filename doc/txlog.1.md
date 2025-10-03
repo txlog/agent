@@ -95,6 +95,27 @@ Default: not set
 the agent will use the API key and ignore the username/password. It is
 recommended to configure only one authentication method to avoid confusion.
 
+### API Key Server Compatibility
+
+**Important:** API key authentication requires Txlog Server version 1.14.0 or
+higher. When an API key is configured, the agent automatically validates the
+server version on startup. If the server version is below 1.14.0, the agent will
+exit with an error message indicating the incompatibility.
+
+If you encounter a compatibility error, you have two options:
+
+1. Upgrade the Txlog Server to version 1.14.0 or higher
+2. Use basic authentication (username and password) instead of API key
+
+Common error messages:
+
+- **"authentication failed: invalid or revoked API key"** - The API key is not
+  valid. Check that the key is correct and has not been revoked in the server.
+- **"server version X does not support API key authentication"** - The server
+  version is too old. Upgrade to version 1.14.0 or higher.
+- **"failed to connect to server"** - Cannot reach the server. Check the URL
+  and network connectivity.
+
 # BUGS
 
 Submit bug reports online at
