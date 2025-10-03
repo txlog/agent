@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/go-resty/resty/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -13,6 +14,16 @@ const agentVersion = "1.7.0-dev"
 
 type ServerVersion struct {
 	Version string `json:"version"`
+}
+
+// ServerVersionError represents an error when fetching server version
+type ServerVersionError struct {
+	StatusCode int
+	Message    string
+}
+
+func (e *ServerVersionError) Error() string {
+	return e.Message
 }
 
 var versionCmd = &cobra.Command{
@@ -37,12 +48,12 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 }
 
-// ServerVersion retrieves the server version from the configured server URL.
-// It uses the resty library to make an HTTP GET request to the "/v1/version" endpoint.
-// If authentication is configured (API key or username and password), it sets the appropriate headers.
-// On success, it returns the server version string.
-// On failure (including network errors or invalid server response), it returns "unknown".
-func GetServerVersion() string {
+// GetServerVersionWithError retrieves the server version and returns detailed error information.
+// Returns the version string and any error encountered.
+// If successful, returns version and nil error.
+// If there's an authentication error, returns empty string and ServerVersionError with status code.
+// If there's a network error, returns empty string and the network error.
+func GetServerVersionWithError() (string, error) {
 	client := resty.New()
 	client.SetAllowGetMethodPayload(true)
 
@@ -53,13 +64,41 @@ func GetServerVersion() string {
 
 	util.SetAuthentication(req)
 
-	_, err := req.Get(viper.GetString("server.url") + "/v1/version")
+	resp, err := req.Get(viper.GetString("server.url") + "/v1/version")
 
-	if err == nil {
-		return server.Version
+	// Network error
+	if err != nil {
+		return "", fmt.Errorf("failed to connect to server: %w", err)
 	}
 
-	return "unknown"
+	// Authentication or other HTTP errors
+	if resp.StatusCode() != 200 {
+		if resp.StatusCode() == 401 {
+			return "", &ServerVersionError{
+				StatusCode: 401,
+				Message:    "authentication failed: invalid or revoked API key",
+			}
+		}
+		return "", &ServerVersionError{
+			StatusCode: resp.StatusCode(),
+			Message:    fmt.Sprintf("server returned status %d: %s", resp.StatusCode(), resp.String()),
+		}
+	}
+
+	return server.Version, nil
+}
+
+// GetServerVersion retrieves the server version from the configured server URL.
+// It uses the resty library to make an HTTP GET request to the "/v1/version" endpoint.
+// If authentication is configured (API key or username and password), it sets the appropriate headers.
+// On success, it returns the server version string.
+// On failure (including network errors or invalid server response), it returns "unknown".
+func GetServerVersion() string {
+	version, err := GetServerVersionWithError()
+	if err != nil {
+		return "unknown"
+	}
+	return version
 }
 
 // LatestAgentVersion retrieves the latest agent version from a remote server.
@@ -83,4 +122,41 @@ func LatestAgentVersion() string {
 	}
 
 	return ""
+}
+
+// ValidateServerVersionForAPIKey checks if the server version supports API key authentication.
+// API key authentication requires server version >= 1.14.0.
+// Returns an error if the server version is too old or cannot be determined.
+func ValidateServerVersionForAPIKey() error {
+	serverVersion, err := GetServerVersionWithError()
+
+	// If there's an error getting the version, return it directly
+	if err != nil {
+		// Check if it's an authentication error
+		if serverErr, ok := err.(*ServerVersionError); ok {
+			return fmt.Errorf("%s", serverErr.Message)
+		}
+		return err
+	}
+
+	// If version is empty (shouldn't happen with above checks, but just in case)
+	if serverVersion == "" {
+		return fmt.Errorf("server returned empty version. API key authentication requires server version >= 1.14.0")
+	}
+
+	// Parse server version
+	sv, err := semver.NewVersion(serverVersion)
+	if err != nil {
+		return fmt.Errorf("invalid server version format '%s'. API key authentication requires server version >= 1.14.0", serverVersion)
+	}
+
+	// Minimum version required for API key support
+	minVersion, _ := semver.NewVersion("1.14.0")
+
+	// Check if server version is compatible
+	if sv.LessThan(minVersion) {
+		return fmt.Errorf("server version %s does not support API key authentication. Please upgrade the server to version 1.14.0 or higher, or use basic authentication instead", serverVersion)
+	}
+
+	return nil
 }
