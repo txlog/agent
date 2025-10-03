@@ -109,8 +109,9 @@ If you encounter a compatibility error, you have two options:
 
 Common error messages:
 
-- **"authentication failed: invalid or revoked API key"** - The API key is not
-  valid. Check that the key is correct and has not been revoked in the server.
+- **"authentication failed: invalid credentials (API key or username/password)"** - The
+  credentials provided are not valid. Check that the API key or username/password
+  are correct and have not been revoked in the server.
 - **"server version X does not support API key authentication"** - The server
   version is too old. Upgrade to version 1.14.0 or higher.
 - **"failed to connect to server"** - Cannot reach the server. Check the URL
