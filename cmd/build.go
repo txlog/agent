@@ -109,9 +109,7 @@ func getSavedTransactions(machineId, hostname string) ([]int, int, error) {
 		}).
 		SetResult(&transactions)
 
-	if username := viper.GetString("server.username"); username != "" {
-		request.SetBasicAuth(username, viper.GetString("server.password"))
-	}
+	util.SetAuthentication(request)
 
 	response, err := request.Get(viper.GetString("server.url") + "/v1/transactions/ids")
 
@@ -199,9 +197,7 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 						"items":            details.PackagesAltered,
 					})
 
-				if username := viper.GetString("server.username"); username != "" {
-					request.SetBasicAuth(username, viper.GetString("server.password"))
-				}
+				util.SetAuthentication(request)
 
 				response, err := request.Post(viper.GetString("server.url") + "/v1/transactions")
 
@@ -348,9 +344,8 @@ func saveExecution(success bool, machineId, hostname, details string, processed,
 	request := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(body)
-	if username := viper.GetString("server.username"); username != "" {
-		request.SetBasicAuth(username, viper.GetString("server.password"))
-	}
+
+	util.SetAuthentication(request)
 
 	response, err := request.Post(viper.GetString("server.url") + "/v1/executions")
 

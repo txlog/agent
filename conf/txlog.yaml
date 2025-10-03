@@ -9,6 +9,9 @@ agent:
 server:
   # The URL of the txlog server to send logs to
   url: http://localhost:8080
+  # If your server requires API key authentication,
+  # uncomment and configure the API key below
+  # api_key: txlog_your_api_key_here
   # If your server requires basic authentication,
   # uncomment and configure username and password below
   # username: bob_tables
