@@ -70,13 +70,30 @@ verify if a new version is available. Default: true
 : Specifies the URL of the txlog server where logs will be sent. Must include
 protocol (http/https) and port if not using defaults. Default: http://localhost:8080
 
+### Authentication
+
+The agent supports two authentication methods: API key authentication and basic
+authentication. You should configure only one authentication method.
+
+**api_key** (string, optional)
+: API key for authenticating with the txlog server. This is the recommended
+authentication method. The API key should be in the format `txlog_...` and is
+sent via the `X-API-Key` HTTP header. Must be uncommented to enable API key
+authentication. Default: not set
+
 **username** (string, optional)
-: Username for basic authentication with the txlog server. Must be uncommented to
-enable authentication. Default: not set
+: Username for basic authentication with the txlog server. This is a legacy
+authentication method. Must be uncommented to enable basic authentication.
+Should be used in conjunction with password. Default: not set
 
 **password** (string, optional)
-: Password for basic authentication with the txlog server. Must be uncommented to
-enable authentication. Should be used in conjunction with username. Default: not set
+: Password for basic authentication with the txlog server. Must be uncommented
+to enable basic authentication. Should be used in conjunction with username.
+Default: not set
+
+**Note:** If both API key and basic authentication credentials are configured,
+the agent will use the API key and ignore the username/password. It is
+recommended to configure only one authentication method to avoid confusion.
 
 # BUGS
 

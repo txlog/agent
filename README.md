@@ -42,6 +42,9 @@ on `/etc/txlog.yaml` file.
 ```yaml
 server:
   url: https://txlog-server.example.com:8080
+  # If your server requires API key authentication,
+  # uncomment and configure the API key below
+  # api_key: txlog_your_api_key_here
   # If your server requires basic authentication,
   # uncomment and configure username and password below
   # username: bob_tables

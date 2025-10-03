@@ -6,9 +6,10 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/txlog/agent/util"
 )
 
-const agentVersion = "1.6.3"
+const agentVersion = "1.7.0-dev"
 
 type ServerVersion struct {
 	Version string `json:"version"`
@@ -38,7 +39,7 @@ func init() {
 
 // ServerVersion retrieves the server version from the configured server URL.
 // It uses the resty library to make an HTTP GET request to the "/v1/version" endpoint.
-// If authentication is configured (username and password), it sets the Basic Auth header.
+// If authentication is configured (API key or username and password), it sets the appropriate headers.
 // On success, it returns the server version string.
 // On failure (including network errors or invalid server response), it returns "unknown".
 func GetServerVersion() string {
@@ -50,9 +51,7 @@ func GetServerVersion() string {
 		SetHeader("Content-Type", "application/json").
 		SetResult(&server)
 
-	if username := viper.GetString("server.username"); username != "" {
-		req.SetBasicAuth(username, viper.GetString("server.password"))
-	}
+	util.SetAuthentication(req)
 
 	_, err := req.Get(viper.GetString("server.url") + "/v1/version")
 

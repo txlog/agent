@@ -9,7 +9,9 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/go-resty/resty/v2"
 	"github.com/itlightning/dateparse"
+	"github.com/spf13/viper"
 )
 
 // DateConversion takes a date string input and converts it to RFC3339 format.
@@ -156,4 +158,24 @@ func binaryInstalled(binaryName string) bool {
 	}
 	out, _ := exec.Command("which", binaryName).CombinedOutput()
 	return !strings.Contains(string(out), "no "+binaryName+" in")
+}
+
+// SetAuthentication configures authentication for an API request.
+// It prioritizes API key authentication over basic authentication.
+// If an API key is configured in the server.api_key setting, it sets the X-API-Key header.
+// Otherwise, if username and password are configured, it uses basic authentication.
+//
+// Parameters:
+//   - request: A resty.Request instance to configure with authentication headers
+func SetAuthentication(request *resty.Request) {
+	// Check for API key first (preferred method)
+	if apiKey := viper.GetString("server.api_key"); apiKey != "" {
+		request.SetHeader("X-API-Key", apiKey)
+		return
+	}
+
+	// Fall back to basic authentication if configured
+	if username := viper.GetString("server.username"); username != "" {
+		request.SetBasicAuth(username, viper.GetString("server.password"))
+	}
 }
