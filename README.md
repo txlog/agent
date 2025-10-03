@@ -51,6 +51,13 @@ server:
   # password: correct-horse-battery-staple
 ```
 
+> [!IMPORTANT] **API Key Compatibility:** API key authentication requires Txlog
+> Server version 1.14.0 or higher. If you configure an API key, the agent will
+> automatically check the server version on startup and fail with a clear error
+> message if the server version is incompatible. To use API keys, ensure your
+> server is running version 1.14.0 or later, or use basic authentication
+> instead.
+
 ## Usage
 
 To compile and send all transaction info:
