@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/go-resty/resty/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -334,10 +335,17 @@ func saveExecution(success bool, machineId, hostname, details string, processed,
 		"os":                     util.Release.PrettyName,
 	}
 
-	if serverVersion != "unknown" && serverVersion >= "1.8.0" {
-		needsRestarting, reason := util.NeedsRestarting()
-		body["needs_restarting"] = needsRestarting
-		body["restarting_reason"] = reason
+	
+	// Check if server supports needs_restarting feature (requires version >= 1.8.0)
+	if serverVersion != "unknown" {
+		sv, err := semver.NewVersion(serverVersion)
+		minVersion := semver.MustParse("1.8.0")
+		
+		if err == nil && !sv.LessThan(minVersion) {
+			needsRestarting, reason := util.NeedsRestarting()
+			body["needs_restarting"] = needsRestarting
+			body["restarting_reason"] = reason
+		}
 	}
 
 	client := resty.New()
