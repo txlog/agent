@@ -4,3 +4,4 @@ doc/txlog.1.gz
 doc/output-example.json
 # Added by goreleaser init:
 dist/
+agent
