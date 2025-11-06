@@ -2,8 +2,8 @@
 title: txlog
 section: 1
 header: Transaction Log - Agent
-footer: txlog 1.6.3
-date: Sep 03, 2025
+footer: txlog 1.8.0
+date: November 06, 2025
 ---
 
 # NAME
@@ -116,6 +116,35 @@ Common error messages:
   version is too old. Upgrade to version 1.14.0 or higher.
 - **"failed to connect to server"** - Cannot reach the server. Check the URL
   and network connectivity.
+
+# SYSTEM MONITORING
+
+The agent collects additional system information beyond transaction data to
+provide comprehensive monitoring capabilities.
+
+## Operating System Information
+
+The agent automatically collects and sends operating system details to the
+server by reading `/etc/os-release`. This includes the OS name, version, and
+distribution information. This data helps the server track which systems are
+running specific OS versions.
+
+## Reboot Requirements
+
+When the Txlog Server version is 1.8.0 or higher, the agent automatically checks
+if the system needs to be restarted using the `dnf needs-restarting -r` command.
+This check is performed during the `txlog build` execution and the results are
+sent to the server along with execution metadata.
+
+The reboot detection helps administrators identify systems that require restart
+after package updates, particularly for kernel updates, systemd updates, or other
+critical system components. The agent sends both a boolean indicator of whether
+a reboot is needed and the detailed reason output from the needs-restarting
+command.
+
+**Note:** This feature is only active when the Txlog Server is running version
+1.8.0 or higher. The agent automatically detects the server version and enables
+this feature accordingly.
 
 # BUGS
 
