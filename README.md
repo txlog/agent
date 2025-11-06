@@ -30,7 +30,7 @@ systems.
 ## Installation
 
 ```bash
-sudo dnf localinstall -y https://rpm.rda.run/rpm-rda-run-1.0-1.noarch.rpm
+sudo dnf localinstall -y https://rpm.rda.run/rpm-rda-run-1.3.0-1.noarch.rpm
 sudo dnf install -y txlog
 ```
 
@@ -77,12 +77,12 @@ To make changes on this project, you need:
 ### Golang
 
 ```bash
-wget https://go.dev/dl/go1.24.3.linux-amd64.tar.gz
+wget https://go.dev/dl/go1.25.4.linux-amd64.tar.gz
 sudo rm -rf /usr/local/go
-sudo tar -C /usr/local -xzf go1.24.3.linux-amd64.tar.gz
+sudo tar -C /usr/local -xzf go1.25.4.linux-amd64.tar.gz
 echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.bashrc
 source ~/.bashrc
-rm go1.24.3.linux-amd64.tar.gz
+rm go1.25.4.linux-amd64.tar.gz
 ```
 
 ### nFPM and Goreleaser
@@ -99,10 +99,10 @@ sudo dnf install -y --exclude=goreleaser-pro goreleaser nfpm
 ### Pandoc
 
 ```bash
-wget https://github.com/jgm/pandoc/releases/download/3.6.4/pandoc-3.6.4-linux-amd64.tar.gz
-tar zxvf pandoc-3.6.4-linux-amd64.tar.gz
-sudo mv pandoc-3.6.4/bin/pandoc /usr/bin/pandoc
-rm -rf pandoc-3.6.4*
+wget https://github.com/jgm/pandoc/releases/download/3.8.2.1/pandoc-3.8.2.1-linux-amd64.tar.gz
+tar zxvf pandoc-3.8.2.1-linux-amd64.tar.gz
+sudo mv pandoc-3.8.2.1/bin/pandoc /usr/bin/pandoc
+rm -rf pandoc-3.8.2.1*
 ```
 
 ### Development commands
