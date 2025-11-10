@@ -95,6 +95,31 @@ The verify command checks:
 
 If issues are detected, run `txlog build` to synchronize the missing data.
 
+## Environment Variables
+
+### NO_COLOR
+
+All txlog commands respect the `NO_COLOR` environment variable as defined by
+[no-color.org](https://no-color.org). When `NO_COLOR` is set to any value (even
+an empty string), the agent will disable colored output and emoji icons,
+producing plain text output suitable for logging or automated processing.
+
+Example usage:
+
+```bash
+# Disable colors and emojis
+NO_COLOR=1 txlog build
+NO_COLOR=1 txlog verify
+NO_COLOR=1 txlog version
+```
+
+This is particularly useful when:
+
+- Running commands in CI/CD pipelines
+- Logging output to files
+- Using terminals that don't support colors
+- Processing output with automated tools
+
 ## 🪴 Project Activity
 
 ![Alt](https://repobeats.axiom.co/api/embed/298f7dad0c28ebbcc34d7906ca99ec3c92fd3755.svg "Repobeats analytics image")

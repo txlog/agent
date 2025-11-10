@@ -49,6 +49,14 @@ system performance while ensuring accurate and timely data collection.
 **--help**
 : help for txlog. Use "txlog [command] --help" for more information about a command
 
+# ENVIRONMENT VARIABLES
+
+**NO_COLOR**
+: When set to any value (even an empty string), disables colored output and emoji
+icons in all txlog commands. This follows the standard defined at
+<https://no-color.org>. Useful for CI/CD pipelines, logging to files, or terminals
+that don't support colors. Example: `NO_COLOR=1 txlog build`
+
 # CONFIGURATION FILE
 
 **/etc/txlog.yaml**
