@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/fatih/color"
 	"github.com/go-resty/resty/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -33,14 +35,36 @@ var versionCmd = &cobra.Command{
 		serverVersion := GetServerVersion()
 		latestAgentVersion := LatestAgentVersion()
 
-		fmt.Println("Txlog Agent v" + agentVersion)
-		fmt.Println("Txlog Server v" + serverVersion)
-
-		if latestAgentVersion != "" && latestAgentVersion != "v"+agentVersion {
-			fmt.Println("")
-			fmt.Println("Your version of Txlog Agent is out of date! The latest version")
-			fmt.Println("is " + latestAgentVersion + ". Go to https://txlog.rda.run/agent/latest for details.")
+		fmt.Println()
+		fmt.Println(strings.Repeat("=", 60))
+		
+		// Agent version
+		fmt.Printf("📦 Txlog Agent:  %s\n", color.CyanString("v"+agentVersion))
+		
+		// Server version
+		if serverVersion != "unknown" {
+			fmt.Printf("🖥️  Txlog Server: %s\n", color.CyanString("v"+serverVersion))
+		} else {
+			fmt.Printf("🖥️  Txlog Server: %s\n", color.YellowString("unknown"))
 		}
+		
+		fmt.Println(strings.Repeat("=", 60))
+
+		// Check for updates
+		if latestAgentVersion != "" && latestAgentVersion != "v"+agentVersion {
+			fmt.Println()
+			color.Yellow("⚠ Update available!")
+			fmt.Println("   Your version of Txlog Agent is out of date!")
+			fmt.Printf("   Latest version: %s\n", color.GreenString(latestAgentVersion))
+			fmt.Printf("   Current version: %s\n", color.RedString("v"+agentVersion))
+			fmt.Println()
+			fmt.Printf("   Download: %s\n", color.CyanString("https://txlog.rda.run/agent/latest"))
+		} else if latestAgentVersion == "v"+agentVersion {
+			fmt.Println()
+			color.Green("✓ You are running the latest version!")
+		}
+		
+		fmt.Println()
 	},
 }
 
