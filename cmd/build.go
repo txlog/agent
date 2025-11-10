@@ -79,7 +79,7 @@ command, and sends them to the server so they can be queried later.`,
 		}
 
 		saveExecution(true, machineId, hostname, "", entriesProcessed, entriesSent)
-		
+
 		fmt.Fprintln(os.Stdout)
 		fmt.Fprintln(os.Stdout, strings.Repeat("=", 60))
 		if entriesSent > 0 {

@@ -179,29 +179,29 @@ func verifyDataIntegrity(machineId, hostname string) (*VerificationResult, error
 			}
 		}
 
-	if len(missing) == 0 && len(extra) == 0 {
-		result.FullyVerified++
+		if len(missing) == 0 && len(extra) == 0 {
+			result.FullyVerified++
+		}
 	}
-}
 
-// Compute intersection count of local and server transaction IDs
-localTransactionSet := make(map[int]struct{}, len(localTransactions))
-for _, id := range localTransactions {
-	localTransactionSet[id] = struct{}{}
-}
-intersectionCount := 0
-for _, id := range serverTransactionIDs {
-	if _, ok := localTransactionSet[id]; ok {
-		intersectionCount++
+	// Compute intersection count of local and server transaction IDs
+	localTransactionSet := make(map[int]struct{}, len(localTransactions))
+	for _, id := range localTransactions {
+		localTransactionSet[id] = struct{}{}
 	}
-}
+	intersectionCount := 0
+	for _, id := range serverTransactionIDs {
+		if _, ok := localTransactionSet[id]; ok {
+			intersectionCount++
+		}
+	}
 
-if result.FullyVerified == intersectionCount {
-	color.Green("  ✓ All transaction items verified successfully")
-}
-fmt.Fprintln(os.Stdout)
+	if result.FullyVerified == intersectionCount {
+		color.Green("  ✓ All transaction items verified successfully")
+	}
+	fmt.Fprintln(os.Stdout)
 
-return result, nil
+	return result, nil
 }
 
 // getLocalTransactionIDs retrieves all transaction IDs from local DNF history
@@ -274,14 +274,14 @@ func compareTransactionItems(localPackages, serverPackages []Package) ([]Package
 	// Create a map of server packages for quick lookup
 	serverPkgMap := make(map[string]Package)
 	for _, pkg := range serverPackages {
-		key := fmt.Sprintf("%s|%s|%s|%s|%s|%s", pkg.Action, pkg.Name, pkg.Version, pkg.Release, pkg.Epoch, pkg.Arch)
+		key := fmt.Sprintf("%s|%s|%s|%s|%s|%s|%s", pkg.Action, pkg.Name, pkg.Version, pkg.Release, pkg.Epoch, pkg.Arch, pkg.Repo)
 		serverPkgMap[key] = pkg
 	}
 
 	// Create a map of local packages
 	localPkgMap := make(map[string]Package)
 	for _, pkg := range localPackages {
-		key := fmt.Sprintf("%s|%s|%s|%s|%s|%s", pkg.Action, pkg.Name, pkg.Version, pkg.Release, pkg.Epoch, pkg.Arch)
+		key := fmt.Sprintf("%s|%s|%s|%s|%s|%s|%s", pkg.Action, pkg.Name, pkg.Version, pkg.Release, pkg.Epoch, pkg.Arch, pkg.Repo)
 		localPkgMap[key] = pkg
 	}
 
