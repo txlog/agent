@@ -37,17 +37,17 @@ var versionCmd = &cobra.Command{
 
 		fmt.Println()
 		fmt.Println(strings.Repeat("=", 60))
-		
+
 		// Agent version
 		fmt.Printf("📦 Txlog Agent:  %s\n", color.CyanString("v"+agentVersion))
-		
+
 		// Server version
 		if serverVersion != "unknown" {
-			fmt.Printf("🖥️  Txlog Server: %s\n", color.CyanString("v"+serverVersion))
+			fmt.Printf("🖥️ Txlog Server: %s\n", color.CyanString("v"+serverVersion))
 		} else {
-			fmt.Printf("🖥️  Txlog Server: %s\n", color.YellowString("unknown"))
+			fmt.Printf("🖥️ Txlog Server: %s\n", color.YellowString("unknown"))
 		}
-		
+
 		fmt.Println(strings.Repeat("=", 60))
 
 		// Check for updates
@@ -63,7 +63,7 @@ var versionCmd = &cobra.Command{
 			fmt.Println()
 			color.Green("✓ You are running the latest version!")
 		}
-		
+
 		fmt.Println()
 	},
 }
