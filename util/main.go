@@ -142,7 +142,7 @@ func PackageBinary() string {
 	return binary
 }
 
-// binaryInstalled checks if a binary is installed in the system by using the 'which' command.
+// binaryInstalled checks if a binary is installed in the system.
 // It takes a binary name as input and returns true if the binary is found in the system PATH,
 // false otherwise.
 //
@@ -152,12 +152,8 @@ func PackageBinary() string {
 // Returns:
 //   - bool: true if binary is installed, false if not found
 func binaryInstalled(binaryName string) bool {
-	validBinary := regexp.MustCompile(`^[a-zA-Z0-9_\-\./\\]+$`)
-	if !validBinary.MatchString(binaryName) {
-		return false
-	}
-	out, _ := exec.Command("which", binaryName).CombinedOutput()
-	return !strings.Contains(string(out), "no "+binaryName+" in")
+	_, err := exec.LookPath(binaryName)
+	return err == nil
 }
 
 // SetAuthentication configures authentication for an API request.
