@@ -127,11 +127,11 @@ func TestCompareTransactionItems(t *testing.T) {
 
 func TestPrintVerificationResults(t *testing.T) {
 	tests := []struct {
-		name               string
-		result             VerificationResult
-		wantFullyVerified  int
-		wantWithMissing    int
-		wantWithExtra      int
+		name                string
+		result              VerificationResult
+		wantFullyVerified   int
+		wantWithMissing     int
+		wantWithExtra       int
 		wantMissingOnServer int
 	}{
 		{
