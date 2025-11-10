@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/fatih/color"
 	"github.com/go-resty/resty/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -53,30 +54,43 @@ command, and sends them to the server so they can be queried later.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		machineId, _ := util.GetMachineId()
 		hostname, _ := util.GetHostname()
-		fmt.Fprintf(os.Stdout, "Compiling host identification for %s\n", hostname)
+		fmt.Fprintf(os.Stdout, "🔍 Compiling host identification for %s\n", color.CyanString(hostname))
+		fmt.Fprintf(os.Stdout, "   Machine ID: %s\n\n", color.CyanString(machineId))
 
 		// * retrieves a list of all transactions saved on the server for this `machine-id`
-		fmt.Fprintf(os.Stdout, "Retrieving saved transactions\n")
-		savedTransactions, _, err := getSavedTransactions(machineId, hostname)
+		fmt.Fprintf(os.Stdout, "📥 Retrieving saved transactions...\n")
+		savedTransactions, savedCount, err := getSavedTransactions(machineId, hostname)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error retrieving saved transactions: %v\n", err)
+			color.Red("✗ Error retrieving saved transactions: %v", err)
 			saveExecution(false, machineId, hostname, err.Error(), 0, 0)
 			os.Exit(1)
 		}
+		fmt.Fprintf(os.Stdout, "   Found %s saved transactions on server\n\n", color.YellowString("%d", savedCount))
 
-		fmt.Fprintf(os.Stdout, "Compiling transaction data\n")
+		fmt.Fprintf(os.Stdout, "⚙️  Compiling transaction data...\n")
 		// * compares the transaction lists to determine which transactions have not been sent to the server
 		// * sends the unsent transactions to the server, one at a time, with data extracted from `sudo dnf history info ID`
 		//    * The sending of the transaction and its details needs to be atomic
 		entriesProcessed, entriesSent, err := saveUnsentTransactions(machineId, hostname, savedTransactions)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error retrieving transactions: %v\n", err)
+			color.Red("✗ Error retrieving transactions: %v", err)
 			saveExecution(false, machineId, hostname, err.Error(), 0, 0)
 			os.Exit(1)
 		}
 
 		saveExecution(true, machineId, hostname, "", entriesProcessed, entriesSent)
-		fmt.Fprintf(os.Stdout, "Done. %d transactions processed, %d transactions sent to server.\n", entriesProcessed, entriesSent)
+		
+		fmt.Fprintln(os.Stdout)
+		fmt.Fprintln(os.Stdout, strings.Repeat("=", 60))
+		if entriesSent > 0 {
+			color.Green("✓ Build completed successfully!")
+		} else {
+			color.Cyan("ℹ Build completed - all transactions already synced")
+		}
+		fmt.Fprintf(os.Stdout, "   Transactions processed: %s\n", color.CyanString("%d", entriesProcessed))
+		fmt.Fprintf(os.Stdout, "   Transactions sent:      %s\n", color.GreenString("%d", entriesSent))
+		fmt.Fprintln(os.Stdout, strings.Repeat("=", 60))
+		fmt.Fprintln(os.Stdout)
 
 	},
 }
@@ -211,7 +225,7 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 				}
 
 				entriesSent++
-				fmt.Fprintf(os.Stdout, "Transaction #%s sent.\n", transactionID)
+				color.Green("   ✓ Transaction #%s sent successfully", transactionID)
 			}
 			entriesProcessed++
 		}
