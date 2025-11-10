@@ -12,7 +12,7 @@ import (
 	"github.com/txlog/agent/util"
 )
 
-const agentVersion = "1.8.0"
+const agentVersion = "1.9.0"
 
 type ServerVersion struct {
 	Version string `json:"version"`
