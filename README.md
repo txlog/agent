@@ -82,6 +82,19 @@ To compile and send all transaction info:
 txlog build
 ```
 
+To verify data integrity between local DNF history and the server:
+
+```bash
+txlog verify
+```
+
+The verify command checks:
+
+- Transactions that exist locally but not on the server
+- Transaction items (packages) integrity for all synced transactions
+
+If issues are detected, run `txlog build` to synchronize the missing data.
+
 ## 🪴 Project Activity
 
 ![Alt](https://repobeats.axiom.co/api/embed/298f7dad0c28ebbcc34d7906ca99ec3c92fd3755.svg "Repobeats analytics image")

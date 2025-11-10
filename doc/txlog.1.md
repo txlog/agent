@@ -35,6 +35,9 @@ system performance while ensuring accurate and timely data collection.
 **help**
 : You know what this option does
 
+**verify**
+: Verify data integrity between local DNF history and server
+
 **version**
 : Show agent and server version number
 
@@ -121,6 +124,53 @@ Common error messages:
 
 The agent collects additional system information beyond transaction data to
 provide comprehensive monitoring capabilities.
+
+## Data Integrity Verification
+
+The `txlog verify` command allows you to verify that all local DNF transaction
+data has been properly replicated to the Txlog server. This is useful for
+ensuring data integrity and identifying any synchronization issues.
+
+The verification process checks:
+
+1. **Missing Transactions**: Identifies transactions that exist in the local DNF
+   history but have not been sent to the server. These transactions may have been
+   skipped during a previous `txlog build` execution due to errors or interruptions.
+
+2. **Transaction Items Integrity**: For each transaction that exists on the server,
+   verifies that all package items (installations, upgrades, removals) are correctly
+   recorded. The verification compares:
+   - Package names, versions, releases, epochs, and architectures
+   - Action types (Install, Upgrade, Remove, etc.)
+   - Repository information
+
+The command provides color-coded output for easy identification of issues:
+
+- **Green (✓)**: Data is verified successfully, no issues found
+- **Red (✗)**: Critical issues detected (missing transactions or items)
+- **Yellow (⚠)**: Warnings (extra items on server that don't exist locally)
+
+After running `txlog verify`, if any issues are detected, you can run `txlog build`
+to synchronize the missing data with the server.
+
+**Exit Codes:**
+
+- **0**: Verification successful, all data is intact
+- **1**: Verification failed, issues detected or errors occurred
+
+**Example usage:**
+
+```bash
+# Verify data integrity
+sudo txlog verify
+
+# Use with custom config file
+sudo txlog verify --config /path/to/custom/txlog.yaml
+```
+
+**Note:** The verify command requires the same authentication and server
+configuration as the build command. Ensure your `/etc/txlog.yaml` is properly
+configured before running verification.
 
 ## Operating System Information
 
