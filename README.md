@@ -58,6 +58,22 @@ server:
 > server is running version 1.14.0 or later, or use basic authentication
 > instead.
 
+## Security Considerations
+
+### Configuration File Security
+
+The `/etc/txlog.yaml` file contains sensitive information, such as the server
+URL and authentication credentials (API key or username/password). It is
+critical to protect this file from unauthorized access.
+
+It is strongly recommended to set the file permissions to `600` to ensure that
+only the root user can read and write the file. You can do this with the
+following command:
+
+```bash
+sudo chmod 600 /etc/txlog.yaml
+```
+
 ## Usage
 
 To compile and send all transaction info:
