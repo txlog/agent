@@ -179,17 +179,29 @@ func verifyDataIntegrity(machineId, hostname string) (*VerificationResult, error
 			}
 		}
 
-		if len(missing) == 0 && len(extra) == 0 {
-			result.FullyVerified++
-		}
+	if len(missing) == 0 && len(extra) == 0 {
+		result.FullyVerified++
 	}
+}
 
-	if result.FullyVerified == len(serverTransactionIDs) {
-		color.Green("  ✓ All transaction items verified successfully")
+// Compute intersection count of local and server transaction IDs
+localTransactionSet := make(map[int]struct{}, len(localTransactions))
+for _, id := range localTransactions {
+	localTransactionSet[id] = struct{}{}
+}
+intersectionCount := 0
+for _, id := range serverTransactionIDs {
+	if _, ok := localTransactionSet[id]; ok {
+		intersectionCount++
 	}
-	fmt.Fprintln(os.Stdout)
+}
 
-	return result, nil
+if result.FullyVerified == intersectionCount {
+	color.Green("  ✓ All transaction items verified successfully")
+}
+fmt.Fprintln(os.Stdout)
+
+return result, nil
 }
 
 // getLocalTransactionIDs retrieves all transaction IDs from local DNF history
