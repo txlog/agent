@@ -13,7 +13,7 @@ all:
 .PHONY: clean
 clean:
 	@rm -rf bin/
-	@rm -rf doc/*.gz
+	@rm -rf man/*.gz
 
 .PHONY: fmt
 fmt:
@@ -29,10 +29,10 @@ build:
 
 .PHONY: man
 man:
-	@rm -f doc/txlog.1.gz
-	@pandoc doc/txlog.1.md -s -t man -o doc/txlog.1
-	@gzip doc/txlog.1
-	@man -l doc/txlog.1.gz
+	@rm -f man/txlog.1.gz
+	@pandoc man/txlog.1.md -s -t man -o man/txlog.1
+	@gzip man/txlog.1
+	@man -l man/txlog.1.gz
 
 .PHONY: rpm
 rpm:

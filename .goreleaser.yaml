@@ -45,7 +45,7 @@ nfpms:
     section: default
     priority: extra
     contents:
-      - src: ./doc/txlog.1.gz
+      - src: ./man/txlog.1.gz
         dst: /usr/share/man/man1/txlog.1.gz
       - src: ./conf/txlog.yaml
         dst: /etc/txlog.yaml
