@@ -28,8 +28,8 @@ go run main.go build --config /path/to/txlog.yaml
 ## Project-Specific Conventions
 
 ### Version Management
-- **Single source of truth**: `agentVersion` constant in `cmd/version.go` (currently "1.9.0")
-- When bumping version: update `cmd/version.go`, `nfpm.yaml`, and commit together
+- **Single source of truth**: `.version` file in root directory
+- When bumping version: update `.version` and commit
 - Server version compatibility checks are critical (e.g., API key auth requires server ≥1.14.0)
 
 ### Authentication Pattern
