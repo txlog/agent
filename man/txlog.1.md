@@ -2,8 +2,8 @@
 title: txlog
 section: 1
 header: Transaction Log - Agent
-footer: txlog 1.9.0
-date: November 10, 2025
+footer: txlog 0-dev
+date: January 1, 1970
 ---
 
 # NAME
@@ -72,14 +72,14 @@ All data is sent to the Transaction Log server.
 
 **check_version** (boolean)
 : Controls whether the agent checks for new versions when running txlog version.
-When enabled, the agent will contact https://txlog.rda.run/agent/version to
+When enabled, the agent will contact <https://txlog.rda.run/agent/version> to
 verify if a new version is available. Default: true
 
 ## Server section
 
 **url** (string)
 : Specifies the URL of the txlog server where logs will be sent. Must include
-protocol (http/https) and port if not using defaults. Default: http://localhost:8080
+protocol (http/https) and port if not using defaults. Default: <http://localhost:8080>
 
 ### Authentication
 

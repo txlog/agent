@@ -1,3 +1,5 @@
+VERSION := $(shell cat .version)
+
 .PHONY: all
 all:
 	@echo "Usage: make [OPTION]"
@@ -25,16 +27,16 @@ vet:
 
 .PHONY: build
 build:
-	@CGO_ENABLED=0 GOOS="linux" GOARCH="amd64" GOAMD64="v2" go build -ldflags="-s -w -extldflags=-static" -trimpath -o bin/txlog
+	@CGO_ENABLED=0 GOOS="linux" GOARCH="amd64" GOAMD64="v2" go build -ldflags="-s -w -extldflags=-static -X 'github.com/txlog/agent/cmd.agentVersion=$(VERSION)'" -trimpath -o bin/txlog
 
 .PHONY: man
 man:
 	@rm -f man/txlog.1.gz
-	@pandoc man/txlog.1.md -s -t man -o man/txlog.1
+	@pandoc man/txlog.1.md -s -t man -o man/txlog.1 --metadata footer="txlog $(VERSION)" --metadata date="$(shell date '+%B %d, %Y')"
 	@gzip man/txlog.1
 	@man -l man/txlog.1.gz
 
 .PHONY: rpm
 rpm:
-	@nfpm pkg --packager rpm --target ./bin/
+	@VERSION=$(VERSION) nfpm pkg --packager rpm --target ./bin/
 	@rm -f ./bin/txlog
