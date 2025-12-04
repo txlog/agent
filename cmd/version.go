@@ -51,17 +51,20 @@ var versionCmd = &cobra.Command{
 		fmt.Println(strings.Repeat("=", 60))
 
 		// Check for updates
-		if latestAgentVersion != "" && latestAgentVersion != "v"+agentVersion {
-			fmt.Println()
-			color.Yellow("⚠ Update available!")
-			fmt.Println("   Your version of Txlog Agent is out of date!")
-			fmt.Printf("   Latest version: %s\n", color.GreenString(latestAgentVersion))
-			fmt.Printf("   Current version: %s\n", color.RedString("v"+agentVersion))
-			fmt.Println()
-			fmt.Printf("   Download: %s\n", color.CyanString("https://txlog.rda.run/agent/latest"))
-		} else if latestAgentVersion == "v"+agentVersion {
-			fmt.Println()
-			color.Green("✓ You are running the latest version!")
+		if latestAgentVersion != "" {
+			updateAvailable, err := CheckUpdate(agentVersion, latestAgentVersion)
+			if err == nil && updateAvailable {
+				fmt.Println()
+				color.Yellow("⚠ Update available!")
+				fmt.Println("   Your version of Txlog Agent is out of date!")
+				fmt.Printf("   Latest version: %s\n", color.GreenString(latestAgentVersion))
+				fmt.Printf("   Current version: %s\n", color.RedString("v"+agentVersion))
+				fmt.Println()
+				fmt.Printf("   Download: %s\n", color.CyanString("https://txlog.rda.run/agent/latest"))
+			} else if err == nil {
+				fmt.Println()
+				color.Green("✓ You are running the latest version!")
+			}
 		}
 
 		fmt.Println()
@@ -188,4 +191,20 @@ func ValidateServerVersionForAPIKey() error {
 	}
 
 	return nil
+}
+
+// CheckUpdate compares the current version with the latest version.
+// Returns true if the latest version is greater than the current version.
+func CheckUpdate(currentStr, latestStr string) (bool, error) {
+	current, err := semver.NewVersion(currentStr)
+	if err != nil {
+		return false, fmt.Errorf("invalid current version: %w", err)
+	}
+
+	latest, err := semver.NewVersion(latestStr)
+	if err != nil {
+		return false, fmt.Errorf("invalid latest version: %w", err)
+	}
+
+	return latest.GreaterThan(current), nil
 }

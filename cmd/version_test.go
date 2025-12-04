@@ -69,3 +69,69 @@ func TestVersionComparison_EdgeCases(t *testing.T) {
 		t.Error("Version 1.13.99 should be considered incompatible (less than minimum)")
 	}
 }
+
+func TestCheckUpdate(t *testing.T) {
+	tests := []struct {
+		name         string
+		current      string
+		latest       string
+		expectUpdate bool
+		expectError  bool
+	}{
+		{
+			name:         "Update available",
+			current:      "1.9.0",
+			latest:       "v1.9.1",
+			expectUpdate: true,
+			expectError:  false,
+		},
+		{
+			name:         "No update - same version",
+			current:      "1.9.1",
+			latest:       "v1.9.1",
+			expectUpdate: false,
+			expectError:  false,
+		},
+		{
+			name:         "No update - current is newer",
+			current:      "1.9.2",
+			latest:       "v1.9.1",
+			expectUpdate: false,
+			expectError:  false,
+		},
+		{
+			name:         "No update - current is newer (dev)",
+			current:      "1.10.0-dev",
+			latest:       "v1.9.1",
+			expectUpdate: false,
+			expectError:  false,
+		},
+		{
+			name:         "Update available - patch version",
+			current:      "1.9.0",
+			latest:       "1.9.1", // missing v prefix in latest, should still work
+			expectUpdate: true,
+			expectError:  false,
+		},
+		{
+			name:         "Invalid version",
+			current:      "invalid",
+			latest:       "v1.9.1",
+			expectUpdate: false,
+			expectError:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			update, err := CheckUpdate(tt.current, tt.latest)
+			if (err != nil) != tt.expectError {
+				t.Errorf("CheckUpdate() error = %v, expectError %v", err, tt.expectError)
+				return
+			}
+			if update != tt.expectUpdate {
+				t.Errorf("CheckUpdate() = %v, want %v", update, tt.expectUpdate)
+			}
+		})
+	}
+}
