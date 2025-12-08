@@ -1,8 +1,11 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/fatih/color"
@@ -54,13 +57,19 @@ var versionCmd = &cobra.Command{
 		if latestAgentVersion != "" {
 			updateAvailable, err := CheckUpdate(agentVersion, latestAgentVersion)
 			if err == nil && updateAvailable {
+				source := CheckUpdateSource("txlog")
+
 				fmt.Println()
-				color.Yellow("⚠ Update available!")
+				color.Yellow("⚠  Update available!")
 				fmt.Println("   Your version of Txlog Agent is out of date!")
 				fmt.Printf("   Latest version: %s\n", color.GreenString(latestAgentVersion))
 				fmt.Printf("   Current version: %s\n", color.RedString("v"+agentVersion))
 				fmt.Println()
-				fmt.Printf("   Download: %s\n", color.CyanString("https://txlog.rda.run/agent/latest"))
+				if source == "repository" {
+					fmt.Printf("   Update: sudo dnf update txlog\n")
+				} else {
+					fmt.Printf("   Download: %s\n", color.CyanString("https://txlog.rda.run/agent/latest"))
+				}
 			} else if err == nil {
 				fmt.Println()
 				color.Green("✓ You are running the latest version!")
@@ -207,4 +216,53 @@ func CheckUpdate(currentStr, latestStr string) (bool, error) {
 	}
 
 	return latest.GreaterThan(current), nil
+}
+
+// CheckUpdateSource checks if updates are available for a given package using DNF.
+// It specifically checks against a predefined repository (`myRepoID`).
+//
+// packageName: The name of the package to check for updates.
+//
+// Returns:
+// - "repository" if updates are available for the package from the specified repository.
+// - "manual" if no updates are found via the repository or if an error occurs.
+func CheckUpdateSource(packageName string) string {
+	// Define the exact ID of your repository
+	const myRepoID = "rpm.rda.run"
+
+	// 15s timeout. Since we are only querying your repository, it should be very fast.
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	// Assemble the command with isolation flags:
+	// --disablerepo="*" : Temporarily disables all repositories (Fedora, Updates, etc)
+	// --enablerepo="..." : Enables only yours.
+	// --refresh : Forces the update of your repository's metadata (ensures you see the newly released version)
+	args := []string{
+		"check-update",
+		packageName,
+		"--disablerepo=*",
+		fmt.Sprintf("--enablerepo=%s", myRepoID),
+		"--refresh",
+	}
+
+	cmd := exec.CommandContext(ctx, "dnf", args...)
+
+	// Execute the command
+	err := cmd.Run()
+
+	// Check the Exit Code
+	if exitError, ok := err.(*exec.ExitError); ok {
+		exitCode := exitError.ExitCode()
+
+		// Exit code 100 in DNF specifically means:
+		// "Updates are available"
+		if exitCode == 100 {
+			return "repository"
+		}
+	}
+
+	// Any other case (Exit 0 = no updates, Exit 1 = error/repo does not exist)
+	// we assume the user should update manually.
+	return "manual"
 }
