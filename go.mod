@@ -7,13 +7,16 @@ require github.com/fatih/color v1.18.0
 require (
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/go-resty/resty/v2 v2.17.1
+	github.com/mark3labs/mcp-go v0.28.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 )
 
 require (
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
+	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )

@@ -32,6 +32,14 @@ system performance while ensuring accurate and timely data collection.
 **build**
 : Compile transaction info
 
+**mcp**
+: MCP (Model Context Protocol) server commands
+
+**mcp serve**
+: Start the MCP server to expose txlog data to LLMs. Supports stdio mode
+(default, for Claude Desktop) and SSE mode for web-based clients.
+Use `--transport stdio` or `--transport sse --port 3000`.
+
 **help**
 : You know what this option does
 
@@ -203,6 +211,98 @@ command.
 **Note:** This feature is only active when the Txlog Server is running version
 1.8.0 or higher. The agent automatically detects the server version and enables
 this feature accordingly.
+
+# MCP SERVER
+
+The agent can run as an MCP (Model Context Protocol) server, enabling LLMs like
+Claude to query datacenter information about assets, transactions, and packages.
+
+## Starting the Server
+
+```bash
+# Start in stdio mode (for Claude Desktop)
+txlog mcp serve
+
+# Start with SSE transport
+txlog mcp serve --transport sse --port 3000
+```
+
+## MCP Transport Options
+
+**--transport** (string)
+: Transport mode for MCP communication. Options: `stdio` (default) for Claude
+Desktop integration, or `sse` for HTTP Server-Sent Events.
+
+**--port** (integer)
+: Port for SSE transport mode. Default: 3000
+
+## Available Tools
+
+The MCP server exposes the following tools for LLM interaction:
+
+**list_assets**
+: Lists all datacenter servers with optional OS and agent_version filters.
+
+**get_asset_details**
+: Gets detailed information about a specific server by hostname or machine_id.
+
+**list_transactions**
+: Retrieves package transaction history for a specific server.
+
+**get_transaction_details**
+: Gets package changes within a specific transaction.
+
+**get_restart_required**
+: Lists all servers that need to be restarted after package updates.
+
+**search_package**
+: Finds servers with a specific package installed.
+
+## Available Resources
+
+**txlog://assets**
+: JSON list of all registered assets.
+
+**txlog://assets/requiring-restart**
+: JSON list of assets needing restart.
+
+**txlog://version**
+: Current server version.
+
+**txlog://assets/{machine_id}/transactions**
+: Transaction history for a specific asset.
+
+**txlog://assets/{machine_id}/executions**
+: Execution history for a specific asset.
+
+## Available Prompts
+
+**infrastructure_report**
+: Generates a comprehensive datacenter infrastructure report.
+
+**security_audit**
+: Performs a security audit focused on package versions.
+
+**troubleshoot_asset**
+: Guides troubleshooting for a specific server.
+
+**compliance_check**
+: Verifies infrastructure compliance.
+
+## Claude Desktop Configuration
+
+Add the following to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "txlog": {
+      "command": "/usr/bin/txlog",
+      "args": ["mcp", "serve", "--config", "/etc/txlog.yaml"]
+    }
+  }
+}
+```
 
 # BUGS
 

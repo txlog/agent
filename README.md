@@ -18,14 +18,12 @@ analytics. By aggregating and processing package history, the Agent provides
 actionable insights for system administrators to optimize their RPM-based
 systems.
 
-> [!WARNING]
-> This repository is under active development and may introduce breaking changes at any time. Please note:
->
-> - The codebase is evolving rapidly
-> - Breaking changes may occur between commits
-> - API stability is not guaranteed
-> - Regular updates are recommended to stay current
-> - Check the changelog before updating
+This agent also implements the [Model Context Protocol
+(MCP)](https://modelcontextprotocol.io), allowing AI assistants and LLMs to
+directly query the transaction logs. Through MCP, the agent exposes tools to
+search package history, analyze installation trends, and retrieve system state
+information, enabling natural language questions about your infrastructure's
+package management history.
 
 ## Installation
 
@@ -95,6 +93,71 @@ The verify command checks:
 - Transaction items (packages) integrity for all synced transactions
 
 If issues are detected, run `txlog build` to synchronize the missing data.
+
+## MCP Server
+
+The agent can run as an MCP (Model Context Protocol) server, enabling LLMs like
+Claude to query your datacenter information.
+
+### Starting the MCP Server
+
+```bash
+# Start in stdio mode (for Claude Desktop)
+txlog mcp serve
+
+# Start with SSE transport for web clients
+txlog mcp serve --transport sse --port 3000
+```
+
+### Available Tools
+
+| Tool | Description |
+| ---- | ----------- |
+| `list_assets` | List all datacenter servers with optional OS/version filters |
+| `get_asset_details` | Get server details by hostname or machine_id |
+| `list_transactions` | Get package transaction history for a server |
+| `get_transaction_details` | Get package changes in a specific transaction |
+| `get_restart_required` | List servers needing reboot after updates |
+| `search_package` | Find servers with a specific package installed |
+
+### Claude Desktop Configuration
+
+Add the following to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "txlog": {
+      "command": "/usr/bin/txlog",
+      "args": ["mcp", "serve", "--config", "/etc/txlog.yaml"]
+    }
+  }
+}
+```
+
+### Gemini CLI Configuration
+
+Add the following to your `settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "txlog": {
+      "command": "/usr/bin/txlog",
+      "args": ["mcp", "serve", "--config", "/etc/txlog.yaml"]
+    }
+  }
+}
+```
+
+### Example Queries
+
+Once configured, you can ask Claude questions like:
+
+- "How many servers are in my datacenter?"
+- "Which servers need to be restarted?"
+- "Show me the last 10 transactions on server-01"
+- "Which servers have openssl installed?"
 
 ## Environment Variables
 
