@@ -102,15 +102,15 @@ func registerTools(s *server.MCPServer, txlogClient *client.Client) {
 }
 
 // handleListAssets handles the list_assets tool call.
-func handleListAssets(ctx context.Context, req mcp.CallToolRequest, txlogClient *client.Client) (*mcp.CallToolResult, error) {
+func handleListAssets(_ context.Context, req mcp.CallToolRequest, txlogClient *client.Client) (*mcp.CallToolResult, error) {
 	assets, err := txlogClient.ListAssets()
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("Erro ao listar assets: %v", err)), nil
 	}
 
 	// Filter by OS if specified
-	osFilter, _ := req.Params.Arguments["os"].(string)
-	agentVersionFilter, _ := req.Params.Arguments["agent_version"].(string)
+	osFilter := req.GetString("os", "")
+	agentVersionFilter := req.GetString("agent_version", "")
 
 	var filtered []client.Asset
 	for _, asset := range assets {
@@ -131,9 +131,9 @@ func handleListAssets(ctx context.Context, req mcp.CallToolRequest, txlogClient 
 }
 
 // handleGetAssetDetails handles the get_asset_details tool call.
-func handleGetAssetDetails(ctx context.Context, req mcp.CallToolRequest, txlogClient *client.Client) (*mcp.CallToolResult, error) {
-	hostname, _ := req.Params.Arguments["hostname"].(string)
-	machineID, _ := req.Params.Arguments["machine_id"].(string)
+func handleGetAssetDetails(_ context.Context, req mcp.CallToolRequest, txlogClient *client.Client) (*mcp.CallToolResult, error) {
+	hostname := req.GetString("hostname", "")
+	machineID := req.GetString("machine_id", "")
 
 	if hostname == "" && machineID == "" {
 		return mcp.NewToolResultError("É necessário fornecer hostname ou machine_id"), nil
@@ -172,10 +172,9 @@ func handleGetAssetDetails(ctx context.Context, req mcp.CallToolRequest, txlogCl
 }
 
 // handleListTransactions handles the list_transactions tool call.
-func handleListTransactions(ctx context.Context, req mcp.CallToolRequest, txlogClient *client.Client) (*mcp.CallToolResult, error) {
-	machineID, _ := req.Params.Arguments["machine_id"].(string)
-	limitFloat, _ := req.Params.Arguments["limit"].(float64)
-	limit := int(limitFloat)
+func handleListTransactions(_ context.Context, req mcp.CallToolRequest, txlogClient *client.Client) (*mcp.CallToolResult, error) {
+	machineID := req.GetString("machine_id", "")
+	limit := req.GetInt("limit", 0)
 	if limit <= 0 {
 		limit = 10
 	}
@@ -193,7 +192,7 @@ func handleListTransactions(ctx context.Context, req mcp.CallToolRequest, txlogC
 }
 
 // handleGetRestartRequired handles the get_restart_required tool call.
-func handleGetRestartRequired(ctx context.Context, req mcp.CallToolRequest, txlogClient *client.Client) (*mcp.CallToolResult, error) {
+func handleGetRestartRequired(_ context.Context, req mcp.CallToolRequest, txlogClient *client.Client) (*mcp.CallToolResult, error) {
 	assets, err := txlogClient.GetAssetsRequiringRestart()
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("Erro ao buscar assets: %v", err)), nil
@@ -214,10 +213,10 @@ func handleGetRestartRequired(ctx context.Context, req mcp.CallToolRequest, txlo
 }
 
 // handleSearchPackage handles the search_package tool call.
-func handleSearchPackage(ctx context.Context, req mcp.CallToolRequest, txlogClient *client.Client) (*mcp.CallToolResult, error) {
-	name, _ := req.Params.Arguments["name"].(string)
-	version, _ := req.Params.Arguments["version"].(string)
-	release, _ := req.Params.Arguments["release"].(string)
+func handleSearchPackage(_ context.Context, req mcp.CallToolRequest, txlogClient *client.Client) (*mcp.CallToolResult, error) {
+	name := req.GetString("name", "")
+	version := req.GetString("version", "")
+	release := req.GetString("release", "")
 
 	if version == "" {
 		version = "*"
@@ -245,9 +244,8 @@ func handleSearchPackage(ctx context.Context, req mcp.CallToolRequest, txlogClie
 }
 
 // handleGetTransactionDetails handles the get_transaction_details tool call.
-func handleGetTransactionDetails(ctx context.Context, req mcp.CallToolRequest, txlogClient *client.Client) (*mcp.CallToolResult, error) {
-	transactionIDFloat, _ := req.Params.Arguments["transaction_id"].(float64)
-	transactionID := int(transactionIDFloat)
+func handleGetTransactionDetails(_ context.Context, req mcp.CallToolRequest, txlogClient *client.Client) (*mcp.CallToolResult, error) {
+	transactionID := req.GetInt("transaction_id", 0)
 
 	items, err := txlogClient.GetTransactionItems(transactionID)
 	if err != nil {
