@@ -15,12 +15,12 @@ import (
 func registerTools(s *server.MCPServer, txlogClient *client.Client) {
 	// Tool: list_assets
 	listAssetsTool := mcp.NewTool("list_assets",
-		mcp.WithDescription("Lista todos os assets (servidores) do datacenter. Use para obter uma visão geral da infraestrutura."),
+		mcp.WithDescription("Lists all assets (servers) in the datacenter. Use to get an overview of the infrastructure."),
 		mcp.WithString("os",
-			mcp.Description("Filtrar por sistema operacional (ex: 'AlmaLinux 9', 'Rocky Linux 8')"),
+			mcp.Description("Filter by operating system (e.g., 'AlmaLinux 9', 'Rocky Linux 8')"),
 		),
 		mcp.WithString("agent_version",
-			mcp.Description("Filtrar por versão do agent txlog"),
+			mcp.Description("Filter by txlog agent version"),
 		),
 	)
 
@@ -30,12 +30,12 @@ func registerTools(s *server.MCPServer, txlogClient *client.Client) {
 
 	// Tool: get_asset_details
 	getAssetDetailsTool := mcp.NewTool("get_asset_details",
-		mcp.WithDescription("Obtém detalhes de um asset específico pelo hostname ou machine_id"),
+		mcp.WithDescription("Gets details of a specific asset by hostname or machine_id"),
 		mcp.WithString("hostname",
-			mcp.Description("Hostname do servidor"),
+			mcp.Description("Server hostname"),
 		),
 		mcp.WithString("machine_id",
-			mcp.Description("Machine ID do servidor"),
+			mcp.Description("Server machine ID"),
 		),
 	)
 
@@ -45,13 +45,13 @@ func registerTools(s *server.MCPServer, txlogClient *client.Client) {
 
 	// Tool: list_transactions
 	listTransactionsTool := mcp.NewTool("list_transactions",
-		mcp.WithDescription("Lista transações de pacotes (dnf/yum) de um asset. Útil para troubleshooting e auditoria."),
+		mcp.WithDescription("Lists package transactions (dnf/yum) for an asset. Useful for troubleshooting and auditing."),
 		mcp.WithString("machine_id",
-			mcp.Description("Machine ID do servidor (obrigatório)"),
+			mcp.Description("Server machine ID (required)"),
 			mcp.Required(),
 		),
 		mcp.WithNumber("limit",
-			mcp.Description("Número máximo de transações a retornar (padrão: 10)"),
+			mcp.Description("Maximum number of transactions to return (default: 10)"),
 		),
 	)
 
@@ -61,7 +61,7 @@ func registerTools(s *server.MCPServer, txlogClient *client.Client) {
 
 	// Tool: get_restart_required
 	restartTool := mcp.NewTool("get_restart_required",
-		mcp.WithDescription("Lista todos os assets que precisam ser reiniciados após atualizações de pacotes"),
+		mcp.WithDescription("Lists all assets that need to be restarted after package updates"),
 	)
 
 	s.AddTool(restartTool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -70,16 +70,16 @@ func registerTools(s *server.MCPServer, txlogClient *client.Client) {
 
 	// Tool: search_package
 	searchPackageTool := mcp.NewTool("search_package",
-		mcp.WithDescription("Busca quais assets têm um pacote específico instalado"),
+		mcp.WithDescription("Searches which assets have a specific package installed"),
 		mcp.WithString("name",
-			mcp.Description("Nome do pacote (ex: 'openssl', 'httpd')"),
+			mcp.Description("Package name (e.g., 'openssl', 'httpd')"),
 			mcp.Required(),
 		),
 		mcp.WithString("version",
-			mcp.Description("Versão específica do pacote"),
+			mcp.Description("Specific package version"),
 		),
 		mcp.WithString("release",
-			mcp.Description("Release específico do pacote"),
+			mcp.Description("Specific package release"),
 		),
 	)
 
@@ -89,9 +89,9 @@ func registerTools(s *server.MCPServer, txlogClient *client.Client) {
 
 	// Tool: get_transaction_details
 	getTransactionDetailsTool := mcp.NewTool("get_transaction_details",
-		mcp.WithDescription("Obtém os detalhes de uma transação específica, incluindo todos os pacotes alterados"),
+		mcp.WithDescription("Gets the details of a specific transaction, including all changed packages"),
 		mcp.WithNumber("transaction_id",
-			mcp.Description("ID da transação"),
+			mcp.Description("Transaction ID"),
 			mcp.Required(),
 		),
 	)
@@ -105,7 +105,7 @@ func registerTools(s *server.MCPServer, txlogClient *client.Client) {
 func handleListAssets(_ context.Context, req mcp.CallToolRequest, txlogClient *client.Client) (*mcp.CallToolResult, error) {
 	assets, err := txlogClient.ListAssets()
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("Erro ao listar assets: %v", err)), nil
+		return mcp.NewToolResultError(fmt.Sprintf("Error listing assets: %v", err)), nil
 	}
 
 	// Filter by OS if specified
@@ -124,7 +124,7 @@ func handleListAssets(_ context.Context, req mcp.CallToolRequest, txlogClient *c
 	}
 
 	if len(filtered) == 0 {
-		return mcp.NewToolResultText("Nenhum asset encontrado com os filtros especificados."), nil
+		return mcp.NewToolResultText("No assets found with the specified filters."), nil
 	}
 
 	return mcp.NewToolResultText(formatAssets(filtered)), nil
@@ -136,7 +136,7 @@ func handleGetAssetDetails(_ context.Context, req mcp.CallToolRequest, txlogClie
 	machineID := req.GetString("machine_id", "")
 
 	if hostname == "" && machineID == "" {
-		return mcp.NewToolResultError("É necessário fornecer hostname ou machine_id"), nil
+		return mcp.NewToolResultError("Either hostname or machine_id must be provided"), nil
 	}
 
 	var asset *client.Asset
@@ -148,7 +148,7 @@ func handleGetAssetDetails(_ context.Context, req mcp.CallToolRequest, txlogClie
 		// Search by machine_id
 		assets, listErr := txlogClient.ListAssets()
 		if listErr != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Erro ao buscar asset: %v", listErr)), nil
+			return mcp.NewToolResultError(fmt.Sprintf("Error fetching asset: %v", listErr)), nil
 		}
 		for _, a := range assets {
 			if a.MachineID == machineID {
@@ -157,12 +157,12 @@ func handleGetAssetDetails(_ context.Context, req mcp.CallToolRequest, txlogClie
 			}
 		}
 		if asset == nil {
-			err = fmt.Errorf("asset não encontrado: %s", machineID)
+			err = fmt.Errorf("asset not found: %s", machineID)
 		}
 	}
 
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("Erro: %v", err)), nil
+		return mcp.NewToolResultError(fmt.Sprintf("Error: %v", err)), nil
 	}
 
 	// Get recent transactions for context
@@ -181,11 +181,11 @@ func handleListTransactions(_ context.Context, req mcp.CallToolRequest, txlogCli
 
 	transactions, err := txlogClient.GetTransactions(machineID, limit)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("Erro ao listar transações: %v", err)), nil
+		return mcp.NewToolResultError(fmt.Sprintf("Error listing transactions: %v", err)), nil
 	}
 
 	if len(transactions) == 0 {
-		return mcp.NewToolResultText("Nenhuma transação encontrada para este asset."), nil
+		return mcp.NewToolResultText("No transactions found for this asset."), nil
 	}
 
 	return mcp.NewToolResultText(formatTransactions(transactions)), nil
@@ -195,19 +195,19 @@ func handleListTransactions(_ context.Context, req mcp.CallToolRequest, txlogCli
 func handleGetRestartRequired(_ context.Context, req mcp.CallToolRequest, txlogClient *client.Client) (*mcp.CallToolResult, error) {
 	assets, err := txlogClient.GetAssetsRequiringRestart()
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("Erro ao buscar assets: %v", err)), nil
+		return mcp.NewToolResultError(fmt.Sprintf("Error fetching assets: %v", err)), nil
 	}
 
 	if len(assets) == 0 {
-		return mcp.NewToolResultText("✅ Nenhum asset precisa ser reiniciado no momento."), nil
+		return mcp.NewToolResultText("✅ No assets need to be restarted at this time."), nil
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("⚠️ **%d assets precisam ser reiniciados:**\n\n", len(assets)))
+	sb.WriteString(fmt.Sprintf("⚠️ **%d assets need to be restarted:**\n\n", len(assets)))
 	for _, asset := range assets {
 		sb.WriteString(fmt.Sprintf("- **%s** (%s)\n", asset.Hostname, asset.OS))
 	}
-	sb.WriteString("\nRecomendação: Agende uma janela de manutenção para reiniciar estes servidores.")
+	sb.WriteString("\nRecommendation: Schedule a maintenance window to restart these servers.")
 
 	return mcp.NewToolResultText(sb.String()), nil
 }
@@ -227,15 +227,15 @@ func handleSearchPackage(_ context.Context, req mcp.CallToolRequest, txlogClient
 
 	assets, err := txlogClient.SearchPackageAssets(name, version, release)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("Erro ao buscar pacote: %v", err)), nil
+		return mcp.NewToolResultError(fmt.Sprintf("Error searching package: %v", err)), nil
 	}
 
 	if len(assets) == 0 {
-		return mcp.NewToolResultText(fmt.Sprintf("Nenhum asset encontrado com o pacote %s instalado.", name)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("No assets found with package %s installed.", name)), nil
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("**Pacote %s encontrado em %d assets:**\n\n", name, len(assets)))
+	sb.WriteString(fmt.Sprintf("**Package %s found on %d assets:**\n\n", name, len(assets)))
 	for _, asset := range assets {
 		sb.WriteString(fmt.Sprintf("- %s (%s)\n", asset.Hostname, asset.OS))
 	}
@@ -249,11 +249,11 @@ func handleGetTransactionDetails(_ context.Context, req mcp.CallToolRequest, txl
 
 	items, err := txlogClient.GetTransactionItems(transactionID)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("Erro ao buscar detalhes da transação: %v", err)), nil
+		return mcp.NewToolResultError(fmt.Sprintf("Error fetching transaction details: %v", err)), nil
 	}
 
 	if len(items) == 0 {
-		return mcp.NewToolResultText("Nenhum item encontrado para esta transação."), nil
+		return mcp.NewToolResultText("No items found for this transaction."), nil
 	}
 
 	return mcp.NewToolResultText(formatTransactionItems(items)), nil
@@ -262,7 +262,7 @@ func handleGetTransactionDetails(_ context.Context, req mcp.CallToolRequest, txl
 // formatAssets formats a list of assets for display.
 func formatAssets(assets []client.Asset) string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("**Total de assets: %d**\n\n", len(assets)))
+	sb.WriteString(fmt.Sprintf("**Total assets: %d**\n\n", len(assets)))
 
 	// Group by OS
 	osCounts := make(map[string]int)
@@ -270,16 +270,16 @@ func formatAssets(assets []client.Asset) string {
 		osCounts[asset.OS]++
 	}
 
-	sb.WriteString("**Distribuição por OS:**\n")
+	sb.WriteString("**Distribution by OS:**\n")
 	for os, count := range osCounts {
 		sb.WriteString(fmt.Sprintf("- %s: %d\n", os, count))
 	}
 
-	sb.WriteString("\n**Lista de assets:**\n")
+	sb.WriteString("\n**Asset list:**\n")
 	for _, asset := range assets {
 		status := "✅"
 		if asset.NeedsRestarting {
-			status = "⚠️ (precisa reiniciar)"
+			status = "⚠️ (needs restart)"
 		}
 		sb.WriteString(fmt.Sprintf("- **%s** | %s | Agent v%s %s\n",
 			asset.Hostname, asset.OS, asset.AgentVersion, status))
@@ -293,19 +293,19 @@ func formatAssetDetails(asset *client.Asset, transactions []client.Transaction) 
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("## Asset: %s\n\n", asset.Hostname))
 	sb.WriteString(fmt.Sprintf("- **Machine ID:** `%s`\n", asset.MachineID))
-	sb.WriteString(fmt.Sprintf("- **Sistema Operacional:** %s\n", asset.OS))
-	sb.WriteString(fmt.Sprintf("- **Versão do Agent:** %s\n", asset.AgentVersion))
+	sb.WriteString(fmt.Sprintf("- **Operating System:** %s\n", asset.OS))
+	sb.WriteString(fmt.Sprintf("- **Agent Version:** %s\n", asset.AgentVersion))
 
 	if asset.NeedsRestarting {
-		sb.WriteString("- **Status:** ⚠️ Precisa reiniciar\n")
+		sb.WriteString("- **Status:** ⚠️ Needs restart\n")
 	} else {
 		sb.WriteString("- **Status:** ✅ OK\n")
 	}
 
 	if len(transactions) > 0 {
-		sb.WriteString("\n### Últimas Transações:\n")
+		sb.WriteString("\n### Recent Transactions:\n")
 		for _, t := range transactions {
-			sb.WriteString(fmt.Sprintf("- [%s] %s - %d pacotes alterados\n",
+			sb.WriteString(fmt.Sprintf("- [%s] %s - %d packages changed\n",
 				t.ExecutedAt, t.Cmdline, t.ItemsCount))
 		}
 	}
@@ -316,14 +316,14 @@ func formatAssetDetails(asset *client.Asset, transactions []client.Transaction) 
 // formatTransactions formats transactions for display.
 func formatTransactions(transactions []client.Transaction) string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("**Últimas %d transações:**\n\n", len(transactions)))
+	sb.WriteString(fmt.Sprintf("**Last %d transactions:**\n\n", len(transactions)))
 
 	for _, t := range transactions {
-		sb.WriteString(fmt.Sprintf("### Transação #%d\n", t.ExternalID))
-		sb.WriteString(fmt.Sprintf("- **Data:** %s\n", t.ExecutedAt))
-		sb.WriteString(fmt.Sprintf("- **Usuário:** %s\n", t.Username))
-		sb.WriteString(fmt.Sprintf("- **Comando:** `%s`\n", t.Cmdline))
-		sb.WriteString(fmt.Sprintf("- **Pacotes alterados:** %d\n\n", t.ItemsCount))
+		sb.WriteString(fmt.Sprintf("### Transaction #%d\n", t.ExternalID))
+		sb.WriteString(fmt.Sprintf("- **Date:** %s\n", t.ExecutedAt))
+		sb.WriteString(fmt.Sprintf("- **User:** %s\n", t.Username))
+		sb.WriteString(fmt.Sprintf("- **Command:** `%s`\n", t.Cmdline))
+		sb.WriteString(fmt.Sprintf("- **Packages changed:** %d\n\n", t.ItemsCount))
 	}
 
 	return sb.String()
@@ -332,7 +332,7 @@ func formatTransactions(transactions []client.Transaction) string {
 // formatTransactionItems formats transaction items for display.
 func formatTransactionItems(items []client.TransactionItem) string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("**Detalhes da transação (%d pacotes):**\n\n", len(items)))
+	sb.WriteString(fmt.Sprintf("**Transaction details (%d packages):**\n\n", len(items)))
 
 	// Group by action
 	actions := make(map[string][]client.TransactionItem)
@@ -341,11 +341,11 @@ func formatTransactionItems(items []client.TransactionItem) string {
 	}
 
 	actionLabels := map[string]string{
-		"Install":   "📦 Instalados",
-		"Update":    "🔄 Atualizados",
-		"Remove":    "🗑️ Removidos",
-		"Downgrade": "⬇️ Downgrade",
-		"Reinstall": "♻️ Reinstalados",
+		"Install":   "📦 Installed",
+		"Update":    "🔄 Updated",
+		"Remove":    "🗑️ Removed",
+		"Downgrade": "⬇️ Downgraded",
+		"Reinstall": "♻️ Reinstalled",
 	}
 
 	for action, actionItems := range actions {
