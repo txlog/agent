@@ -270,6 +270,25 @@ The MCP server exposes the following tools for LLM interaction:
 **search_package**
 : Finds servers with a specific package installed.
 
+**generate_executive_report**
+: Generates a monthly executive report for management about package updates.
+Requires two parameters: `month` (1-12) and `year` (e.g., 2024). The tool
+fetches update data from the server and returns instructions for creating a
+professional report highlighting security updates, CVEs, and infrastructure
+impact.
+
+Example usage: Simply ask in natural language:
+
+- "Generate an executive report for December 2024."
+- "Create a monthly management report about package updates in November 2024."
+
+The report will include:
+
+- Most critical and high-impact updates (security/kernel packages)
+- Percentage of servers impacted by major updates
+- Patterns and observations for management
+- CVE research with Red Hat Enterprise Linux errata references
+
 ## Available Resources
 
 **txlog://assets**
@@ -300,6 +319,12 @@ The MCP server exposes the following tools for LLM interaction:
 
 **compliance_check**
 : Verifies infrastructure compliance.
+
+**executive_report**
+: Generates a monthly executive report for management (prompt version).
+Requires arguments `month` (1-12) and `year` (e.g., 2024). Note: The
+`generate_executive_report` tool is recommended as it can be invoked
+automatically by the LLM.
 
 ## Claude Desktop Configuration
 

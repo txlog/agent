@@ -125,6 +125,7 @@ txlog mcp serve --transport sse --port 3000
 | `get_transaction_details` | Get package changes in a specific transaction |
 | `get_restart_required` | List servers needing reboot after updates |
 | `search_package` | Find servers with a specific package installed |
+| `generate_executive_report` | Generate monthly executive report for management |
 
 ### Claude Desktop Configuration
 
@@ -158,12 +159,54 @@ Add the following to your `settings.json`:
 
 ### Example Queries
 
-Once configured, you can ask Claude questions like:
+Once configured, you can ask Claude or Gemini questions like:
 
 - "How many servers are in my datacenter?"
 - "Which servers need to be restarted?"
 - "Show me the last 10 transactions on server-01"
 - "Which servers have openssl installed?"
+- "Generate an executive report for December 2024"
+- "Create a monthly management report for November 2024"
+
+### Generating Executive Reports
+
+The MCP server provides the `generate_executive_report` tool that creates monthly
+management reports about package updates. The tool automatically fetches data from
+the server and returns instructions for generating a professional report.
+
+**Required parameters:**
+
+- `month`: The month (1-12) for the report
+- `year`: The year (e.g., 2024) for the report
+
+**Example usage:**
+
+Simply ask in natural language:
+
+> "Generate an executive report for December 2024."
+
+or
+
+> "Create a monthly management report about package updates in November 2024."
+
+**The report will include:**
+
+- Most critical and high-impact updates (security/kernel packages)
+- Percentage of servers impacted by major updates
+- Patterns and observations for management
+- CVE research with Red Hat Enterprise Linux errata references
+
+### Available Prompts
+
+The MCP server also provides prompts for detailed report generation:
+
+| Prompt | Description | Required Arguments |
+| ------ | ----------- | ------------------ |
+| `infrastructure_report` | Generate a complete infrastructure report | None |
+| `security_audit` | Perform a security audit focused on packages | `package` (optional) |
+| `troubleshoot_asset` | Troubleshooting guide for a specific server | `hostname` |
+| `compliance_check` | Verify infrastructure compliance | None |
+| `executive_report` | Generate a monthly management report | `month`, `year` |
 
 ## Environment Variables
 

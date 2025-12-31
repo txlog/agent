@@ -237,6 +237,43 @@ func (c *Client) GetServerVersion() (string, error) {
 	return result.Version, nil
 }
 
+// MonthlyReportPackage represents a package update in the monthly report.
+type MonthlyReportPackage struct {
+	OSVersion      string `json:"os_version"`
+	PackageRPM     string `json:"package_rpm"`
+	AssetsAffected int    `json:"assets_affected"`
+}
+
+// MonthlyReportResponse represents the response from the monthly report endpoint.
+type MonthlyReportResponse struct {
+	AssetCount int                    `json:"asset_count"`
+	Month      int                    `json:"month"`
+	Year       int                    `json:"year"`
+	Packages   []MonthlyReportPackage `json:"packages"`
+}
+
+// GetMonthlyReport retrieves the monthly package update report for a specific month/year.
+func (c *Client) GetMonthlyReport(month, year int) (*MonthlyReportResponse, error) {
+	resp, err := c.newRequest().
+		SetQueryParam("month", fmt.Sprintf("%d", month)).
+		SetQueryParam("year", fmt.Sprintf("%d", year)).
+		Get("/v1/reports/monthly")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get monthly report: %w", err)
+	}
+
+	if resp.StatusCode() != 200 {
+		return nil, fmt.Errorf("server returned status %d: %s", resp.StatusCode(), resp.String())
+	}
+
+	var report MonthlyReportResponse
+	if err := json.Unmarshal(resp.Body(), &report); err != nil {
+		return nil, fmt.Errorf("failed to parse monthly report response: %w", err)
+	}
+
+	return &report, nil
+}
+
 // GetAssetByHostname finds an asset by its hostname.
 func (c *Client) GetAssetByHostname(hostname string) (*Asset, error) {
 	resp, err := c.newRequest().

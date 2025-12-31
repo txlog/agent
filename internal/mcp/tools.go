@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -99,6 +100,21 @@ func registerTools(s *server.MCPServer, txlogClient *client.Client, compatibilit
 	)
 
 	s.AddTool(getTransactionDetailsTool, wrapHandler(handleGetTransactionDetails))
+
+	// Tool: generate_executive_report
+	generateExecutiveReportTool := mcp.NewTool("generate_executive_report",
+		mcp.WithDescription("Generates a monthly executive report for management about package updates. Returns data and instructions for creating a professional report highlighting security updates, CVEs, and infrastructure impact."),
+		mcp.WithNumber("month",
+			mcp.Description("Month (1-12) for the report"),
+			mcp.Required(),
+		),
+		mcp.WithNumber("year",
+			mcp.Description("Year (e.g., 2024) for the report"),
+			mcp.Required(),
+		),
+	)
+
+	s.AddTool(generateExecutiveReportTool, wrapHandler(handleGenerateExecutiveReport))
 }
 
 // handleListAssets handles the list_assets tool call.
@@ -371,4 +387,55 @@ func formatTransactionItems(items []client.TransactionItem) string {
 func toJSON(v interface{}) string {
 	b, _ := json.MarshalIndent(v, "", "  ")
 	return string(b)
+}
+
+// handleGenerateExecutiveReport handles the generate_executive_report tool call.
+func handleGenerateExecutiveReport(_ context.Context, req mcp.CallToolRequest, txlogClient *client.Client) (*mcp.CallToolResult, error) {
+	month := req.GetInt("month", 0)
+	year := req.GetInt("year", 0)
+
+	if month < 1 || month > 12 {
+		return mcp.NewToolResultError("Month must be a valid number between 1 and 12."), nil
+	}
+
+	if year < 2000 || year > 2100 {
+		return mcp.NewToolResultError("Year must be a valid number between 2000 and 2100."), nil
+	}
+
+	// Fetch data from the server
+	report, err := txlogClient.GetMonthlyReport(month, year)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Error fetching report data from server: %v", err)), nil
+	}
+
+	// Get month name
+	monthName := time.Month(month).String()
+
+	// Build CSV content from packages
+	var csvBuilder strings.Builder
+	csvBuilder.WriteString("os_version,package_rpm,assets_affected\n")
+	for _, pkg := range report.Packages {
+		csvBuilder.WriteString(fmt.Sprintf("%s,%s,%d\n", pkg.OSVersion, pkg.PackageRPM, pkg.AssetsAffected))
+	}
+	csvContent := csvBuilder.String()
+
+	promptText := fmt.Sprintf(`Act as an SRE specialist preparing an executive summary for management. The tone should be professional, direct, and focused on impact and security. Format the final response in Markdown.
+
+Report Period: %s %d
+
+Context: Below is the list of packages that were updated in our infrastructure during the reporting period. The data shows the number of servers where each package was updated, and the total number of update transactions (some servers may receive the same package update multiple times). Our total infrastructure consists of %d servers.
+
+Data:
+---
+%s
+---
+
+Task:
+Based on this data, write a brief management report in Markdown format (1-2 paragraphs) highlighting:
+1. The most critical and high-impact updates, considering the number of affected servers. Give special attention to security packages (such as OpenSSL) or system packages (such as the Kernel).
+2. The overall reach of the updates (percentage of servers impacted by the most important updates).
+3. Any relevant patterns or observations that management should be aware of.
+4. Research on the internet which CVEs these packages may have fixed during the selected period, always summarizing each CVE in one or two sentences. Use Red Hat Enterprise Linux errata as a reference, since RPM-based systems are based on RHEL.`, monthName, year, report.AssetCount, csvContent)
+
+	return mcp.NewToolResultText(promptText), nil
 }

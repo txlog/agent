@@ -29,7 +29,7 @@ func NewServer(compatibilityErr error) *server.MCPServer {
 	registerResources(s, txlogClient)
 
 	// Register Prompts
-	registerPrompts(s)
+	registerPrompts(s, txlogClient)
 
 	return s
 }
