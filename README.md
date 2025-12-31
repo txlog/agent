@@ -99,6 +99,12 @@ If issues are detected, run `txlog build` to synchronize the missing data.
 The agent can run as an MCP (Model Context Protocol) server, enabling LLMs like
 Claude to query your datacenter information.
 
+> [!IMPORTANT]
+> **Server Compatibility:** MCP functionality requires Txlog Server version
+> 1.19.0 or higher. The agent will automatically check the server version when
+> starting the MCP server and fail with a clear error message if the server
+> version is incompatible.
+
 ### Starting the MCP Server
 
 ```bash

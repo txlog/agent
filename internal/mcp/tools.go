@@ -12,7 +12,19 @@ import (
 )
 
 // registerTools registers all MCP tools with the server.
-func registerTools(s *server.MCPServer, txlogClient *client.Client) {
+// If compatibilityErr is not nil, all tools will return an error message
+// indicating the server version is incompatible.
+func registerTools(s *server.MCPServer, txlogClient *client.Client, compatibilityErr error) {
+	// Helper function to wrap handlers with compatibility check
+	wrapHandler := func(handler func(context.Context, mcp.CallToolRequest, *client.Client) (*mcp.CallToolResult, error)) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			if compatibilityErr != nil {
+				return mcp.NewToolResultError(fmt.Sprintf("Server compatibility error: %v", compatibilityErr)), nil
+			}
+			return handler(ctx, req, txlogClient)
+		}
+	}
+
 	// Tool: list_assets
 	listAssetsTool := mcp.NewTool("list_assets",
 		mcp.WithDescription("Lists all assets (servers) in the datacenter. Use to get an overview of the infrastructure."),
@@ -24,9 +36,7 @@ func registerTools(s *server.MCPServer, txlogClient *client.Client) {
 		),
 	)
 
-	s.AddTool(listAssetsTool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return handleListAssets(ctx, req, txlogClient)
-	})
+	s.AddTool(listAssetsTool, wrapHandler(handleListAssets))
 
 	// Tool: get_asset_details
 	getAssetDetailsTool := mcp.NewTool("get_asset_details",
@@ -39,9 +49,7 @@ func registerTools(s *server.MCPServer, txlogClient *client.Client) {
 		),
 	)
 
-	s.AddTool(getAssetDetailsTool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return handleGetAssetDetails(ctx, req, txlogClient)
-	})
+	s.AddTool(getAssetDetailsTool, wrapHandler(handleGetAssetDetails))
 
 	// Tool: list_transactions
 	listTransactionsTool := mcp.NewTool("list_transactions",
@@ -55,18 +63,14 @@ func registerTools(s *server.MCPServer, txlogClient *client.Client) {
 		),
 	)
 
-	s.AddTool(listTransactionsTool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return handleListTransactions(ctx, req, txlogClient)
-	})
+	s.AddTool(listTransactionsTool, wrapHandler(handleListTransactions))
 
 	// Tool: get_restart_required
 	restartTool := mcp.NewTool("get_restart_required",
 		mcp.WithDescription("Lists all assets that need to be restarted after package updates"),
 	)
 
-	s.AddTool(restartTool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return handleGetRestartRequired(ctx, req, txlogClient)
-	})
+	s.AddTool(restartTool, wrapHandler(handleGetRestartRequired))
 
 	// Tool: search_package
 	searchPackageTool := mcp.NewTool("search_package",
@@ -83,9 +87,7 @@ func registerTools(s *server.MCPServer, txlogClient *client.Client) {
 		),
 	)
 
-	s.AddTool(searchPackageTool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return handleSearchPackage(ctx, req, txlogClient)
-	})
+	s.AddTool(searchPackageTool, wrapHandler(handleSearchPackage))
 
 	// Tool: get_transaction_details
 	getTransactionDetailsTool := mcp.NewTool("get_transaction_details",
@@ -96,9 +98,7 @@ func registerTools(s *server.MCPServer, txlogClient *client.Client) {
 		),
 	)
 
-	s.AddTool(getTransactionDetailsTool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return handleGetTransactionDetails(ctx, req, txlogClient)
-	})
+	s.AddTool(getTransactionDetailsTool, wrapHandler(handleGetTransactionDetails))
 }
 
 // handleListAssets handles the list_assets tool call.

@@ -33,12 +33,14 @@ system performance while ensuring accurate and timely data collection.
 : Compile transaction info
 
 **mcp**
-: MCP (Model Context Protocol) server commands
+: MCP (Model Context Protocol) server commands. Requires server version 1.19.0
+or higher.
 
 **mcp serve**
 : Start the MCP server to expose txlog data to LLMs. Supports stdio mode
 (default, for Claude Desktop) and SSE mode for web-based clients.
-Use `--transport stdio` or `--transport sse --port 3000`.
+Use `--transport stdio` or `--transport sse --port 3000`. The server version
+is validated on startup.
 
 **help**
 : You know what this option does
@@ -216,6 +218,16 @@ this feature accordingly.
 
 The agent can run as an MCP (Model Context Protocol) server, enabling LLMs like
 Claude to query datacenter information about assets, transactions, and packages.
+
+**Important:** MCP functionality requires Txlog Server version 1.19.0 or higher.
+When starting the MCP server, the agent automatically validates the server version.
+If the server version is below 1.19.0, the agent will exit with an error message
+indicating the incompatibility.
+
+Common error messages:
+
+- **"server version X does not support MCP"** - The server version is too old.
+  Upgrade to version 1.19.0 or higher.
 
 ## Starting the Server
 

@@ -8,7 +8,9 @@ import (
 )
 
 // NewServer creates a new MCP server configured with txlog tools, resources, and prompts.
-func NewServer() *server.MCPServer {
+// If compatibilityErr is not nil, it indicates the server version is incompatible,
+// and all tools will return friendly error messages instead of executing.
+func NewServer(compatibilityErr error) *server.MCPServer {
 	s := server.NewMCPServer(
 		"Txlog MCP Server",
 		"1.0.0",
@@ -21,7 +23,7 @@ func NewServer() *server.MCPServer {
 	txlogClient := client.New()
 
 	// Register Tools
-	registerTools(s, txlogClient)
+	registerTools(s, txlogClient, compatibilityErr)
 
 	// Register Resources
 	registerResources(s, txlogClient)

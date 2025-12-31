@@ -202,6 +202,43 @@ func ValidateServerVersionForAPIKey() error {
 	return nil
 }
 
+// ValidateServerVersionForMCP checks if the server version supports MCP functionality.
+// MCP requires server version >= 1.19.0.
+// Returns an error if the server version is too old or cannot be determined.
+func ValidateServerVersionForMCP() error {
+	serverVersion, err := GetServerVersionWithError()
+
+	// If there's an error getting the version, return it directly
+	if err != nil {
+		// Check if it's an authentication error
+		if serverErr, ok := err.(*ServerVersionError); ok {
+			return serverErr
+		}
+		return err
+	}
+
+	// If version is empty (shouldn't happen with above checks, but just in case)
+	if serverVersion == "" {
+		return fmt.Errorf("server returned empty version. MCP requires server version >= 1.19.0")
+	}
+
+	// Parse server version
+	sv, err := semver.NewVersion(serverVersion)
+	if err != nil {
+		return fmt.Errorf("invalid server version format '%s'. MCP requires server version >= 1.19.0", serverVersion)
+	}
+
+	// Minimum version required for MCP support
+	minVersion := semver.MustParse("1.19.0")
+
+	// Check if server version is compatible
+	if sv.LessThan(minVersion) {
+		return fmt.Errorf("server version %s does not support MCP. Please upgrade the server to version 1.19.0 or higher", serverVersion)
+	}
+
+	return nil
+}
+
 // CheckUpdate compares the current version with the latest version.
 // Returns true if the latest version is greater than the current version.
 func CheckUpdate(currentStr, latestStr string) (bool, error) {

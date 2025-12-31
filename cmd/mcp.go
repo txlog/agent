@@ -51,10 +51,21 @@ func init() {
 }
 
 func runMCPServer() {
-	// Create the MCP server
-	mcpServer := mcp.NewServer()
-
 	transport := viper.GetString("mcp.transport")
+
+	// Validate server version compatibility
+	compatibilityErr := ValidateServerVersionForMCP()
+
+	// For SSE transport, fail immediately if server is incompatible
+	// For stdio transport (LLM clients), start the server but return friendly errors
+	if compatibilityErr != nil && transport == "sse" {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", compatibilityErr)
+		os.Exit(1)
+	}
+
+	// Create the MCP server with compatibility error (if any)
+	// In stdio mode, tools will return friendly error messages
+	mcpServer := mcp.NewServer(compatibilityErr)
 
 	switch transport {
 	case "stdio":
