@@ -192,7 +192,7 @@ func TestFormatAssets(t *testing.T) {
 	}
 
 	// Check for expected content
-	if !containsString(result, "Total de assets: 2") {
+	if !containsString(result, "Total assets: 2") {
 		t.Error("expected total count in output")
 	}
 	if !containsString(result, "server-01") {
