@@ -244,12 +244,12 @@ To make changes on this project, you need:
 ### Golang
 
 ```bash
-wget https://go.dev/dl/go1.25.6.linux-amd64.tar.gz
+wget https://go.dev/dl/go1.26.0.linux-amd64.tar.gz
 sudo rm -rf /usr/local/go
-sudo tar -C /usr/local -xzf go1.25.6.linux-amd64.tar.gz
+sudo tar -C /usr/local -xzf go1.26.0.linux-amd64.tar.gz
 echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.bashrc
 source ~/.bashrc
-rm go1.25.6.linux-amd64.tar.gz
+rm go1.26.0.linux-amd64.tar.gz
 ```
 
 ### nFPM and Goreleaser
@@ -266,10 +266,10 @@ sudo dnf install -y --exclude=goreleaser-pro goreleaser nfpm
 ### Pandoc
 
 ```bash
-wget https://github.com/jgm/pandoc/releases/download/3.8.2.1/pandoc-3.8.2.1-linux-amd64.tar.gz
-tar zxvf pandoc-3.8.2.1-linux-amd64.tar.gz
-sudo mv pandoc-3.8.2.1/bin/pandoc /usr/bin/pandoc
-rm -rf pandoc-3.8.2.1*
+wget https://github.com/jgm/pandoc/releases/download/3.9/pandoc-3.9-linux-amd64.tar.gz
+tar zxvf pandoc-3.9-linux-amd64.tar.gz
+sudo mv pandoc-3.9/bin/pandoc /usr/bin/pandoc
+rm -rf pandoc-3.9*
 ```
 
 ### Development commands
