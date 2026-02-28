@@ -236,6 +236,7 @@ This is particularly useful when:
 ## 🪴 Project Activity
 
 ![Alt](https://repobeats.axiom.co/api/embed/298f7dad0c28ebbcc34d7906ca99ec3c92fd3755.svg "Repobeats analytics image")
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftxlog%2Fagent.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Ftxlog%2Fagent?ref=badge_shield)
 
 ## Development
 
@@ -291,3 +292,7 @@ To create the binary and distribute
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create a new Pull Request
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftxlog%2Fagent.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Ftxlog%2Fagent?ref=badge_large)
