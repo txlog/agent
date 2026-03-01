@@ -2,13 +2,28 @@
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
-  <p align="center"><img width="100" height="100" src="https://raw.githubusercontent.com/txlog/.github/refs/heads/main/profile/logbook.png" alt="The Logo"></p>
-  <p align="center"><strong>Track RPM transactions on your datacenter</strong></p>
   <p align="center">
-    <a href="https://semver.org"><img src="https://img.shields.io/badge/SemVer-2.0.0-22bfda.svg" alt="SemVer Format"></a>
-    <a href="https://github.com/txlog/.github/blob/main/profile/CODE_OF_CONDUCT.md"><img src="https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg" alt="Contributor Covenant"></a>
-    <a href="https://newreleases.io/github/txlog/agent"><img src="https://newreleases.io/badge.svg" alt="NewReleases"></a>
-    <a href="https://deepwiki.com/txlog/agent"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+    <img width="100" height="100" src="https://raw.githubusercontent.com/txlog/.github/refs/heads/main/profile/logbook.png" alt="The Logo">
+  </p>
+  <p align="center">
+    <strong>Track RPM transactions on your datacenter</strong>
+  </p>
+  <p align="center">
+    <a href="https://semver.org">
+      <img src="https://img.shields.io/badge/SemVer-2.0.0-22bfda.svg" alt="SemVer Format">
+    </a>
+    <a href="https://github.com/txlog/.github/blob/main/profile/CODE_OF_CONDUCT.md">
+      <img src="https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg" alt="Contributor Covenant">
+    </a>
+    <a href="https://newreleases.io/github/txlog/agent">
+      <img src="https://newreleases.io/badge.svg" alt="NewReleases">
+    </a>
+    <a href="https://app.fossa.com/projects/git%2Bgithub.com%2Ftxlog%2Fagent?ref=badge_shield">
+      <img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftxlog%2Fagent.svg?type=shield" alt="FOSSA Status">
+    </a>
+    <a href="https://deepwiki.com/txlog/agent">
+      <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki">
+    </a>
   </p>
 </p>
 
@@ -236,7 +251,6 @@ This is particularly useful when:
 ## 🪴 Project Activity
 
 ![Alt](https://repobeats.axiom.co/api/embed/298f7dad0c28ebbcc34d7906ca99ec3c92fd3755.svg "Repobeats analytics image")
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftxlog%2Fagent.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Ftxlog%2Fagent?ref=badge_shield)
 
 ## Development
 
