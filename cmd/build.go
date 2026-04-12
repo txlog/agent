@@ -61,8 +61,16 @@ var buildCmd = &cobra.Command{
 This command compiles all transactions listed on 'dnf history'
 command, and sends them to the server so they can be queried later.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		machineId, _ := util.GetMachineId()
-		hostname, _ := util.GetHostname()
+		machineId, err := util.GetMachineId()
+		if err != nil {
+			color.Red("✗ Error getting machine ID: %v", err)
+			os.Exit(1)
+		}
+		hostname, err := util.GetHostname()
+		if err != nil {
+			color.Red("✗ Error getting hostname: %v", err)
+			os.Exit(1)
+		}
 		fmt.Fprintf(os.Stdout, "🔍 Compiling host identification for %s\n", color.CyanString(hostname))
 		fmt.Fprintf(os.Stdout, "   Machine ID: %s\n\n", color.CyanString(machineId))
 
