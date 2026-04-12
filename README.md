@@ -18,9 +18,6 @@
     <a href="https://newreleases.io/github/txlog/agent">
       <img src="https://newreleases.io/badge.svg" alt="NewReleases">
     </a>
-    <a href="https://app.fossa.com/projects/git%2Bgithub.com%2Ftxlog%2Fagent?ref=badge_shield">
-      <img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftxlog%2Fagent.svg?type=shield" alt="FOSSA Status">
-    </a>
     <a href="https://deepwiki.com/txlog/agent">
       <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki">
     </a>
@@ -259,12 +256,12 @@ To make changes on this project, you need:
 ### Golang
 
 ```bash
-wget https://go.dev/dl/go1.26.0.linux-amd64.tar.gz
+wget https://go.dev/dl/go1.26.2.linux-amd64.tar.gz
 sudo rm -rf /usr/local/go
-sudo tar -C /usr/local -xzf go1.26.0.linux-amd64.tar.gz
+sudo tar -C /usr/local -xzf go1.26.2.linux-amd64.tar.gz
 echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.bashrc
 source ~/.bashrc
-rm go1.26.0.linux-amd64.tar.gz
+rm go1.26.2.linux-amd64.tar.gz
 ```
 
 ### nFPM and Goreleaser
