@@ -15,6 +15,9 @@ import (
 	"github.com/txlog/agent/util"
 )
 
+// Pre-compiled regex for parsing local DNF history output
+var reLocalTransactionID = regexp.MustCompile(`^\s*(\d+)\s*\|`)
+
 // ServerTransaction represents a transaction as stored on the server
 type ServerTransaction struct {
 	TransactionID   string    `json:"transaction_id"`
@@ -131,20 +134,21 @@ func verifyDataIntegrity(machineId, hostname string) (*VerificationResult, error
 	}
 	fmt.Fprintln(os.Stdout)
 
+	// Build a set for O(1) lookup of local transaction IDs
+	localTransactionSet := make(map[int]struct{}, len(localTransactions))
+	for _, id := range localTransactions {
+		localTransactionSet[id] = struct{}{}
+	}
+
 	// Check transaction items for each transaction on server
 	fmt.Fprintf(os.Stdout, "Verifying transaction items integrity...\n")
+	intersectionCount := 0
 	for _, serverID := range serverTransactionIDs {
 		// Skip verification if transaction doesn't exist locally
-		found := false
-		for _, localID := range localTransactions {
-			if localID == serverID {
-				found = true
-				break
-			}
-		}
-		if !found {
+		if _, found := localTransactionSet[serverID]; !found {
 			continue
 		}
+		intersectionCount++
 
 		// Get local transaction details
 		localDetails, err := getTransactionItems(fmt.Sprintf("%d", serverID))
@@ -184,18 +188,6 @@ func verifyDataIntegrity(machineId, hostname string) (*VerificationResult, error
 		}
 	}
 
-	// Compute intersection count of local and server transaction IDs
-	localTransactionSet := make(map[int]struct{}, len(localTransactions))
-	for _, id := range localTransactions {
-		localTransactionSet[id] = struct{}{}
-	}
-	intersectionCount := 0
-	for _, id := range serverTransactionIDs {
-		if _, ok := localTransactionSet[id]; ok {
-			intersectionCount++
-		}
-	}
-
 	if result.FullyVerified == intersectionCount {
 		color.Green("  ✓ All transaction items verified successfully")
 	}
@@ -220,17 +212,13 @@ func getLocalTransactionIDs() ([]int, error) {
 	// Skip header lines
 	lines = lines[2:]
 
-	re := regexp.MustCompile(`^\s*(\d+)\s*\|`)
 	transactionIDs := make([]int, 0)
 
 	for _, line := range lines {
-		if re.MatchString(line) {
-			matches := re.FindStringSubmatch(line)
-			if len(matches) > 1 {
-				id, err := strconv.Atoi(strings.TrimSpace(matches[1]))
-				if err == nil {
-					transactionIDs = append(transactionIDs, id)
-				}
+		if matches := reLocalTransactionID.FindStringSubmatch(line); len(matches) > 1 {
+			id, err := strconv.Atoi(strings.TrimSpace(matches[1]))
+			if err == nil {
+				transactionIDs = append(transactionIDs, id)
 			}
 		}
 	}

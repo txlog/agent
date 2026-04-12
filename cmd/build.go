@@ -44,6 +44,15 @@ type Package struct {
 	FromRepo string `json:"from_repo,omitempty"`
 }
 
+// Pre-compiled regexes for parsing DNF history output
+var (
+	reHistoryLine      = regexp.MustCompile(`\s*(\d+)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*`)
+	reValidInput       = regexp.MustCompile(`^[a-zA-Z0-9_\-\./\\]+$`)
+	reTransactionField = regexp.MustCompile(`^(.+?)\s*:\s*(.+)$`)
+	rePackageInstall   = regexp.MustCompile(`^\s+(\w+)\s+(.+?)\s+@(.+)$`)
+	rePackageUpgraded  = regexp.MustCompile(`^\s+(\w+)\s+(.+?)\s+@@(.+)$`)
+)
+
 // buildCmd represents the build command
 var buildCmd = &cobra.Command{
 	Use:   "build",
@@ -168,26 +177,23 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 	lines := strings.Split(output, "\n")
 	lines = lines[2:]
 
-	re := regexp.MustCompile(`\s*(\d+)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*`)
 	entriesProcessed := 0
 	entriesSent := 0
+
+	// Build a set for O(1) lookup of saved transaction IDs
+	savedSet := make(map[string]struct{}, len(savedTransactions))
+	for _, t := range savedTransactions {
+		savedSet[fmt.Sprintf("%d", t)] = struct{}{}
+	}
 
 	client := resty.New()
 
 	for _, line := range lines {
-		if re.MatchString(line) {
-			matches := re.FindStringSubmatch(line)
+		matches := reHistoryLine.FindStringSubmatch(line)
+		if matches != nil {
 			transactionID := strings.TrimSpace(matches[1])
 
-			exists := false
-			for _, t := range savedTransactions {
-				if fmt.Sprintf("%d", t) == transactionID {
-					exists = true
-					break
-				}
-			}
-
-			if !exists {
+			if _, exists := savedSet[transactionID]; !exists {
 				details, err := getTransactionItems(transactionID)
 				if err != nil {
 					return 0, 0, err
@@ -235,8 +241,7 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 }
 
 func getTransactionItems(transaction_id string) (TransactionDetail, error) {
-	validInput := regexp.MustCompile(`^[a-zA-Z0-9_\-\./\\]+$`)
-	if !validInput.MatchString(transaction_id) {
+	if !reValidInput.MatchString(transaction_id) {
 		return TransactionDetail{}, fmt.Errorf("invalid input")
 	}
 	out, err := exec.Command(util.PackageBinary(), "history", "info", transaction_id).Output()
@@ -247,17 +252,11 @@ func getTransactionItems(transaction_id string) (TransactionDetail, error) {
 	output := string(out)
 	lines := strings.Split(output, "\n")
 
-	// Use regex to extract data
-	reTransaction := regexp.MustCompile(`^(.+?)\s*:\s*(.+)$`)
-	rePackage := regexp.MustCompile(`^\s+(\w+)\s+(.+?)\s+@(.+)$`)
-	rePackageUpgraded := regexp.MustCompile(`^\s+(\w+)\s+(.+?)\s+@@(.+)$`)
-
 	var transaction TransactionDetail
 	var packages []Package
 	var scriptletOutput []string
 	for _, line := range lines {
-		if rePackage.MatchString(line) {
-			matches := rePackage.FindStringSubmatch(line)
+		if matches := rePackageInstall.FindStringSubmatch(line); matches != nil {
 			name, version, release, epoch, arch := util.SplitPackageName(strings.TrimSpace(matches[2]))
 			pkg := Package{
 				Action:  strings.TrimSpace(matches[1]),
@@ -269,8 +268,7 @@ func getTransactionItems(transaction_id string) (TransactionDetail, error) {
 				Repo:    strings.TrimSpace(matches[3]),
 			}
 			packages = append(packages, pkg)
-		} else if rePackageUpgraded.MatchString(line) {
-			matches := rePackageUpgraded.FindStringSubmatch(line)
+		} else if matches := rePackageUpgraded.FindStringSubmatch(line); matches != nil {
 			name, version, release, epoch, arch := util.SplitPackageName(strings.TrimSpace(matches[2]))
 			pkg := Package{
 				Action:   strings.TrimSpace(matches[1]),
@@ -284,8 +282,7 @@ func getTransactionItems(transaction_id string) (TransactionDetail, error) {
 			packages = append(packages, pkg)
 		} else if strings.HasPrefix(line, "  ") {
 			scriptletOutput = append(scriptletOutput, strings.TrimSpace(line))
-		} else if reTransaction.MatchString(line) {
-			matches := reTransaction.FindStringSubmatch(line)
+		} else if matches := reTransactionField.FindStringSubmatch(line); matches != nil {
 			key := strings.TrimSpace(matches[1])
 			value := strings.TrimSpace(matches[2])
 			switch key {

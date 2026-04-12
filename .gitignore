@@ -6,3 +6,4 @@ doc/output-example.json
 dist/
 agent
 man/txlog.1.gz
+.gomodcache/

@@ -105,6 +105,9 @@ func SplitPackageName(package_name string) (name, version, release, epoch, arch 
 	return
 }
 
+// reVersionID matches VERSION_ID in /etc/os-release to determine the OS major version
+var reVersionID = regexp.MustCompile(`VERSION_ID="([1-9][0-9]?)(?:\.[0-9]+)?"`)
+
 // PackageBinary determines and verifies the appropriate package manager binary (yum or dnf)
 // based on the Linux distribution version. It reads /etc/os-release to check if the system
 // is running RHEL/CentOS 8 or 9, in which case it selects 'dnf' instead of the default 'yum'.
@@ -122,8 +125,7 @@ func PackageBinary() string {
 	// Read /etc/os-release line-by-line
 	releaseData, _ := os.ReadFile("/etc/os-release")
 	for _, line := range strings.Split(string(releaseData), "\n") {
-		re := regexp.MustCompile(`VERSION_ID="([1-9][0-9]?)(?:\.[0-9]+)?"`)
-		match := re.FindStringSubmatch(line)
+		match := reVersionID.FindStringSubmatch(line)
 		if len(match) > 1 {
 			versionID := match[1]
 			vID, _ := strconv.Atoi(versionID)

@@ -2,7 +2,6 @@ package mcp
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -381,12 +380,6 @@ func formatTransactionItems(items []client.TransactionItem) string {
 	}
 
 	return sb.String()
-}
-
-// toJSON converts an object to JSON string for debugging.
-func toJSON(v interface{}) string {
-	b, _ := json.MarshalIndent(v, "", "  ")
-	return string(b)
 }
 
 // handleGenerateExecutiveReport handles the generate_executive_report tool call.

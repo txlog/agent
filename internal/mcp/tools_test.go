@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -192,10 +193,10 @@ func TestFormatAssets(t *testing.T) {
 	}
 
 	// Check for expected content
-	if !containsString(result, "Total assets: 2") {
+	if !strings.Contains(result, "Total assets: 2") {
 		t.Error("expected total count in output")
 	}
-	if !containsString(result, "server-01") {
+	if !strings.Contains(result, "server-01") {
 		t.Error("expected hostname in output")
 	}
 }
@@ -211,7 +212,7 @@ func TestFormatTransactionItems(t *testing.T) {
 	if result == "" {
 		t.Error("expected non-empty formatted output")
 	}
-	if !containsString(result, "httpd") {
+	if !strings.Contains(result, "httpd") {
 		t.Error("expected package name in output")
 	}
 }
@@ -234,17 +235,4 @@ func TestExtractMachineID(t *testing.T) {
 			t.Errorf("extractMachineID(%q) = %q, expected %q", tt.uri, result, tt.expected)
 		}
 	}
-}
-
-func containsString(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsSubstring(s, substr))
-}
-
-func containsSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
