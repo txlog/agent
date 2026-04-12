@@ -347,7 +347,7 @@ func getTransactionItems(transaction_id string) (TransactionDetail, error) {
 func saveExecution(success bool, machineId, hostname, details string, processed, sent int) error {
 	err := util.ParseOSRelease()
 	if err != nil {
-		return fmt.Errorf("error while reading /etc/os-release file: %v", err)
+		return fmt.Errorf("error while reading /etc/os-release file: %w", err)
 	}
 
 	// * retrieves the server version
