@@ -79,7 +79,9 @@ command, and sends them to the server so they can be queried later.`,
 		savedTransactions, savedCount, err := getSavedTransactions(machineId, hostname)
 		if err != nil {
 			color.Red("✗ Error retrieving saved transactions: %v", err)
-			saveExecution(false, machineId, hostname, err.Error(), 0, 0)
+			if execErr := saveExecution(false, machineId, hostname, err.Error(), 0, 0); execErr != nil {
+				color.Yellow("⚠ Warning: failed to save execution report: %v", execErr)
+			}
 			os.Exit(1)
 		}
 		fmt.Fprintf(os.Stdout, "   Found %s saved transactions on server\n\n", color.YellowString("%d", savedCount))
@@ -91,11 +93,15 @@ command, and sends them to the server so they can be queried later.`,
 		entriesProcessed, entriesSent, err := saveUnsentTransactions(machineId, hostname, savedTransactions)
 		if err != nil {
 			color.Red("✗ Error retrieving transactions: %v", err)
-			saveExecution(false, machineId, hostname, err.Error(), 0, 0)
+			if execErr := saveExecution(false, machineId, hostname, err.Error(), 0, 0); execErr != nil {
+				color.Yellow("⚠ Warning: failed to save execution report: %v", execErr)
+			}
 			os.Exit(1)
 		}
 
-		saveExecution(true, machineId, hostname, "", entriesProcessed, entriesSent)
+		if execErr := saveExecution(true, machineId, hostname, "", entriesProcessed, entriesSent); execErr != nil {
+			color.Yellow("⚠ Warning: failed to save execution report: %v", execErr)
+		}
 
 		fmt.Fprintln(os.Stdout)
 		fmt.Fprintln(os.Stdout, strings.Repeat("=", 60))
