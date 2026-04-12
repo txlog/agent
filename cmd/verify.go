@@ -143,6 +143,8 @@ func verifyDataIntegrity(machineId, hostname string) (*VerificationResult, error
 
 	// Check transaction items for each transaction on server
 	fmt.Fprintf(os.Stdout, "Verifying transaction items integrity...\n")
+	verifyClient := resty.New()
+	verifyClient.SetTimeout(30 * time.Second)
 	intersectionCount := 0
 	for _, serverID := range serverTransactionIDs {
 		// Skip verification if transaction doesn't exist locally
@@ -159,7 +161,7 @@ func verifyDataIntegrity(machineId, hostname string) (*VerificationResult, error
 		}
 
 		// Get server transaction details using the /v1/items endpoint
-		serverDetails, err := getServerTransactionItems(machineId, fmt.Sprintf("%d", serverID))
+		serverDetails, err := getServerTransactionItems(verifyClient, machineId, fmt.Sprintf("%d", serverID))
 		if err != nil {
 			color.Yellow("  ⚠ Warning: Could not get server details for transaction #%d: %v", serverID, err)
 			continue
@@ -229,12 +231,9 @@ func getLocalTransactionIDs() ([]int, error) {
 
 // getServerTransactionItems retrieves detailed information about a specific transaction from the server
 // using the /v1/items endpoint
-func getServerTransactionItems(machineId, transactionID string) (*ServerTransaction, error) {
-	client := resty.New()
-	client.SetTimeout(30 * time.Second)
-
+func getServerTransactionItems(httpClient *resty.Client, machineId, transactionID string) (*ServerTransaction, error) {
 	var transaction ServerTransaction
-	request := client.R().
+	request := httpClient.R().
 		SetHeader("Content-Type", "application/json").
 		SetQueryParam("machine_id", machineId).
 		SetQueryParam("transaction_id", transactionID).
