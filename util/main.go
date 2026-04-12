@@ -81,34 +81,34 @@ func GetHostname() (string, error) {
 //
 // The .rpm suffix is optional and will be trimmed if present.
 // If epoch is not present in the package name, an empty string is returned for that component.
-func SplitPackageName(package_name string) (name, version, release, epoch, arch string) {
-	package_name = strings.TrimSuffix(package_name, ".rpm")
+func SplitPackageName(packageName string) (name, version, release, epoch, arch string) {
+	packageName = strings.TrimSuffix(packageName, ".rpm")
 
-	archIndex := strings.LastIndex(package_name, ".")
+	archIndex := strings.LastIndex(packageName, ".")
 	if archIndex == -1 {
-		return package_name, "", "", "", ""
+		return packageName, "", "", "", ""
 	}
-	arch = package_name[archIndex+1:]
+	arch = packageName[archIndex+1:]
 
-	relIndex := strings.LastIndex(package_name[:archIndex], "-")
+	relIndex := strings.LastIndex(packageName[:archIndex], "-")
 	if relIndex == -1 {
-		return package_name[:archIndex], "", "", "", arch
+		return packageName[:archIndex], "", "", "", arch
 	}
-	release = package_name[relIndex+1 : archIndex]
+	release = packageName[relIndex+1 : archIndex]
 
-	verIndex := strings.LastIndex(package_name[:relIndex], "-")
+	verIndex := strings.LastIndex(packageName[:relIndex], "-")
 	if verIndex == -1 {
-		return package_name[:relIndex], "", release, "", arch
+		return packageName[:relIndex], "", release, "", arch
 	}
-	version = package_name[verIndex+1 : relIndex]
+	version = packageName[verIndex+1 : relIndex]
 
-	epochIndex := strings.Index(package_name, ":")
+	epochIndex := strings.Index(packageName, ":")
 	if epochIndex == -1 {
 		epoch = ""
-		name = package_name[0:verIndex]
+		name = packageName[0:verIndex]
 	} else {
-		epoch = package_name[strings.LastIndex(package_name[:relIndex], "-")+1 : epochIndex]
-		name = package_name[:verIndex]
+		epoch = packageName[strings.LastIndex(packageName[:relIndex], "-")+1 : epochIndex]
+		name = packageName[:verIndex]
 	}
 
 	return
