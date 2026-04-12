@@ -259,11 +259,11 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 	return entriesProcessed, entriesSent, nil
 }
 
-func getTransactionItems(transaction_id string) (TransactionDetail, error) {
-	if !reValidInput.MatchString(transaction_id) {
+func getTransactionItems(transactionID string) (TransactionDetail, error) {
+	if !reValidInput.MatchString(transactionID) {
 		return TransactionDetail{}, fmt.Errorf("invalid input")
 	}
-	out, err := exec.Command(util.PackageBinary(), "history", "info", transaction_id).Output()
+	out, err := exec.Command(util.PackageBinary(), "history", "info", transactionID).Output()
 	if err != nil {
 		return TransactionDetail{}, err
 	}
