@@ -175,6 +175,9 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 
 	output := string(out)
 	lines := strings.Split(output, "\n")
+	if len(lines) < 3 {
+		return 0, 0, nil
+	}
 	lines = lines[2:]
 
 	entriesProcessed := 0
