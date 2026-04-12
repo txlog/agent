@@ -116,15 +116,15 @@ func verifyDataIntegrity(machineId, hostname string) (*VerificationResult, error
 	fmt.Fprintf(os.Stdout, "Found %s transactions on server\n\n", color.YellowString("%d", len(serverTransactionIDs)))
 
 	// Convert server IDs to map for quick lookup
-	serverTransactionsMap := make(map[int]bool)
+	serverTransactionsMap := make(map[int]struct{}, len(serverTransactionIDs))
 	for _, id := range serverTransactionIDs {
-		serverTransactionsMap[id] = true
+		serverTransactionsMap[id] = struct{}{}
 	}
 
 	// Check for missing transactions on server
 	fmt.Fprintf(os.Stdout, "Checking for missing transactions...\n")
 	for _, localID := range localTransactions {
-		if !serverTransactionsMap[localID] {
+		if _, exists := serverTransactionsMap[localID]; !exists {
 			result.MissingOnServer = append(result.MissingOnServer, fmt.Sprintf("%d", localID))
 			color.Red("  ✗ Transaction #%d exists locally but not on server", localID)
 		}
