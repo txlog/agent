@@ -85,12 +85,21 @@ func SplitPackageName(package_name string) (name, version, release, epoch, arch 
 	package_name = strings.TrimSuffix(package_name, ".rpm")
 
 	archIndex := strings.LastIndex(package_name, ".")
+	if archIndex == -1 {
+		return package_name, "", "", "", ""
+	}
 	arch = package_name[archIndex+1:]
 
 	relIndex := strings.LastIndex(package_name[:archIndex], "-")
+	if relIndex == -1 {
+		return package_name[:archIndex], "", "", "", arch
+	}
 	release = package_name[relIndex+1 : archIndex]
 
 	verIndex := strings.LastIndex(package_name[:relIndex], "-")
+	if verIndex == -1 {
+		return package_name[:relIndex], "", release, "", arch
+	}
 	version = package_name[verIndex+1 : relIndex]
 
 	epochIndex := strings.Index(package_name, ":")
