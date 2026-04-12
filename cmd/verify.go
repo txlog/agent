@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/go-resty/resty/v2"
@@ -230,6 +231,7 @@ func getLocalTransactionIDs() ([]int, error) {
 // using the /v1/items endpoint
 func getServerTransactionItems(machineId, transactionID string) (*ServerTransaction, error) {
 	client := resty.New()
+	client.SetTimeout(30 * time.Second)
 
 	var transaction ServerTransaction
 	request := client.R().

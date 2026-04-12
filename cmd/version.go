@@ -91,6 +91,7 @@ func init() {
 // If there's a network error, returns empty string and the network error.
 func GetServerVersionWithError() (string, error) {
 	client := resty.New()
+	client.SetTimeout(30 * time.Second)
 	client.SetAllowGetMethodPayload(true)
 
 	var server ServerVersion
@@ -153,7 +154,9 @@ func LatestAgentVersion() string {
 	checkVersion := viper.Get("agent.check_version")
 
 	if checkVersion == nil || checkVersion == true {
-		response, err := resty.New().R().Get("https://txlog.rda.run/agent/version")
+		client := resty.New()
+		client.SetTimeout(30 * time.Second)
+		response, err := client.R().Get("https://txlog.rda.run/agent/version")
 
 		if err == nil {
 			if response.StatusCode() == 200 {

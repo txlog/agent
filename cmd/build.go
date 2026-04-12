@@ -136,6 +136,7 @@ func init() {
 //     Possible errors include network failures or non-200 HTTP status codes
 func getSavedTransactions(machineId, hostname string) ([]int, int, error) {
 	client := resty.New()
+	client.SetTimeout(30 * time.Second)
 	client.SetAllowGetMethodPayload(true)
 
 	var transactions []int
@@ -204,6 +205,7 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 	}
 
 	client := resty.New()
+	client.SetTimeout(30 * time.Second)
 
 	for _, line := range lines {
 		matches := reHistoryLine.FindStringSubmatch(line)
@@ -376,6 +378,7 @@ func saveExecution(success bool, machineId, hostname, details string, processed,
 	}
 
 	client := resty.New()
+	client.SetTimeout(30 * time.Second)
 	request := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(body)

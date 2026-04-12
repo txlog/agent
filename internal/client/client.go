@@ -4,6 +4,7 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/spf13/viper"
@@ -74,6 +75,7 @@ type Client struct {
 func New() *Client {
 	baseURL := viper.GetString("server.url")
 	httpClient := resty.New()
+	httpClient.SetTimeout(30 * time.Second)
 	httpClient.SetBaseURL(baseURL)
 
 	return &Client{
