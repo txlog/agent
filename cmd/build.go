@@ -47,7 +47,7 @@ type Package struct {
 // Pre-compiled regexes for parsing DNF history output
 var (
 	reHistoryLine      = regexp.MustCompile(`\s*(\d+)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*`)
-	reValidInput       = regexp.MustCompile(`^[a-zA-Z0-9_\-\./\\]+$`)
+	reValidInput       = regexp.MustCompile(`^[0-9]+$`)
 	reTransactionField = regexp.MustCompile(`^(.+?)\s*:\s*(.+)$`)
 	rePackageInstall   = regexp.MustCompile(`^\s+(\w+)\s+(.+?)\s+@(.+)$`)
 	rePackageUpgraded  = regexp.MustCompile(`^\s+(\w+)\s+(.+?)\s+@@(.+)$`)
