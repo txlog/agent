@@ -116,14 +116,9 @@ func GetServerVersionWithError() (string, error) {
 				Message:    "authentication failed: invalid credentials (API key or username/password)",
 			}
 		}
-		// Truncate response body to first 100 characters to avoid leaking sensitive details
-		safeBody := resp.String()
-		if len(safeBody) > 100 {
-			safeBody = safeBody[:100] + "..."
-		}
 		return "", &ServerVersionError{
 			StatusCode: resp.StatusCode(),
-			Message:    fmt.Sprintf("server returned status %d: %s", resp.StatusCode(), safeBody),
+			Message:    fmt.Sprintf("server returned status %d", resp.StatusCode()),
 		}
 	}
 

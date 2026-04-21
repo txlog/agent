@@ -246,7 +246,7 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 				}
 
 				if response.StatusCode() != 200 {
-					return 0, 0, fmt.Errorf("server returned status code %d: %s", response.StatusCode(), response.String())
+					return 0, 0, fmt.Errorf("server returned status code %d", response.StatusCode())
 				}
 
 				entriesSent++
