@@ -28,6 +28,10 @@ contents:
   - src: ./conf/txlog.yaml
     dst: /etc/txlog.yaml
     type: config|noreplace
+    file_info:
+      mode: 0600
+      owner: root
+      group: root
   - src: ./bin/txlog
     dst: /usr/bin/txlog
 
