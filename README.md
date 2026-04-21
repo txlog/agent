@@ -85,6 +85,30 @@ following command:
 sudo chmod 600 /etc/txlog.yaml
 ```
 
+## Data Collection and Privacy
+
+The txlog agent collects the following data for inventory and tracking purposes:
+
+### Collected Data
+
+- **Machine ID**: Unique identifier from `/etc/machine-id` (persistent across reboots)
+- **Hostname**: System hostname via `hostname` command
+- **Package Information**: Names, versions, and installation dates of packages
+- **Transaction Data**: DNF/yum history including command lines, users, and timestamps
+- **System Information**: Operating system name and version from `/etc/os-release`
+
+### Data Transmission
+
+All data is transmitted to your configured txlog server. Ensure you:
+
+- Use HTTPS to encrypt data in transit
+- Protect your API keys and credentials
+- Configure appropriate retention policies on your server
+
+### Compliance
+
+Users in jurisdictions with data protection regulations (GDPR, CCPA, etc.) should ensure compliance with local laws when deploying txlog.
+
 ## Usage
 
 To compile and send all transaction info:
