@@ -8,11 +8,16 @@ agent:
 # Server configuration
 server:
   # The URL of the txlog server to send logs to
-  url: http://localhost:8080
+  # WARNING: Always use HTTPS in production to protect API keys and credentials
+  url: https://localhost:8080
+
   # If your server requires API key authentication,
   # uncomment and configure the API key below
+  # NOTE: Store this file with permissions 0600 to protect credentials
   # api_key: txlog_your_api_key_here
+
   # If your server requires basic authentication,
   # uncomment and configure username and password below
+  # WARNING: Basic auth sends credentials with each request. Prefer API keys.
   # username: bob_tables
   # password: correct-horse-battery-staple
