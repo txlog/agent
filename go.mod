@@ -5,7 +5,7 @@ go 1.26.2
 require github.com/fatih/color v1.19.0
 
 require (
-	github.com/Masterminds/semver/v3 v3.4.0
+	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/go-resty/resty/v2 v2.17.2
 	github.com/mark3labs/mcp-go v0.49.0
 	github.com/spf13/cobra v1.10.2
