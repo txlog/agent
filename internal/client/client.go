@@ -347,4 +347,3 @@ func (c *Client) GetTransactionVulnerabilities(machineID string, transactionID i
 
 	return vulns, nil
 }
-
