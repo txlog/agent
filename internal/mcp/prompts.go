@@ -42,9 +42,9 @@ The report should include:
 
 3. **Recommendations**
    - Suggested maintenance actions
-   - Security alerts if any
+   - Security alerts (specifically checking for **CVE-2026-31431**)
 
-Use the tools list_assets and get_restart_required to obtain the necessary data.`,
+Use the tools list_assets, get_restart_required, and get_vulnerable_assets to obtain the necessary data.`,
 						},
 					},
 				},
@@ -74,9 +74,9 @@ Verify:
    - kernel
    - glibc
 
-2. **Version Consistency**
-   - Identify servers with different versions of the same package
-   - Highlight potentially vulnerable versions
+2. **Vulnerability Assessment**
+   - Identify servers vulnerable to **CVE-2026-31431 (Copy Fail)**
+   - Highlight potentially vulnerable versions of security packages
 
 3. **Pending Restart Servers**
    - List servers that need to restart after updates`

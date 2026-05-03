@@ -34,6 +34,9 @@ func registerTools(s *server.MCPServer, txlogClient *client.Client, compatibilit
 		mcp.WithString("agent_version",
 			mcp.Description("Filter by txlog agent version"),
 		),
+		mcp.WithBoolean("vulnerable",
+			mcp.Description("Filter only assets with critical vulnerabilities (e.g., CVE-2026-31431)"),
+		),
 	)
 
 	s.AddTool(listAssetsTool, wrapHandler(handleListAssets))
@@ -72,6 +75,13 @@ func registerTools(s *server.MCPServer, txlogClient *client.Client, compatibilit
 
 	s.AddTool(restartTool, wrapHandler(handleGetRestartRequired))
 
+	// Tool: get_vulnerable_assets
+	vulnerableTool := mcp.NewTool("get_vulnerable_assets",
+		mcp.WithDescription("Lists all assets that are vulnerable to critical security issues (e.g., CVE-2026-31431)"),
+	)
+
+	s.AddTool(vulnerableTool, wrapHandler(handleGetVulnerableAssets))
+
 	// Tool: search_package
 	searchPackageTool := mcp.NewTool("search_package",
 		mcp.WithDescription("Searches which assets have a specific package installed"),
@@ -100,6 +110,21 @@ func registerTools(s *server.MCPServer, txlogClient *client.Client, compatibilit
 
 	s.AddTool(getTransactionDetailsTool, wrapHandler(handleGetTransactionDetails))
 
+	// Tool: get_transaction_vulnerabilities
+	getTransactionVulnerabilitiesTool := mcp.NewTool("get_transaction_vulnerabilities",
+		mcp.WithDescription("Lists known security vulnerabilities (CVEs) fixed or introduced in a specific transaction"),
+		mcp.WithString("machine_id",
+			mcp.Description("Server machine ID (required)"),
+			mcp.Required(),
+		),
+		mcp.WithNumber("transaction_id",
+			mcp.Description("Transaction ID (required)"),
+			mcp.Required(),
+		),
+	)
+
+	s.AddTool(getTransactionVulnerabilitiesTool, wrapHandler(handleGetTransactionVulnerabilities))
+
 	// Tool: generate_executive_report
 	generateExecutiveReportTool := mcp.NewTool("generate_executive_report",
 		mcp.WithDescription("Generates a monthly executive report for management about package updates. Returns data and instructions for creating a professional report highlighting security updates, CVEs, and infrastructure impact."),
@@ -126,6 +151,7 @@ func handleListAssets(_ context.Context, req mcp.CallToolRequest, txlogClient *c
 	// Filter by OS if specified
 	osFilter := req.GetString("os", "")
 	agentVersionFilter := req.GetString("agent_version", "")
+	vulnerableFilter := req.GetBool("vulnerable", false)
 
 	var filtered []client.Asset
 	for _, asset := range assets {
@@ -133,6 +159,9 @@ func handleListAssets(_ context.Context, req mcp.CallToolRequest, txlogClient *c
 			continue
 		}
 		if agentVersionFilter != "" && asset.AgentVersion != agentVersionFilter {
+			continue
+		}
+		if vulnerableFilter && !asset.CopyFail {
 			continue
 		}
 		filtered = append(filtered, asset)
@@ -143,6 +172,34 @@ func handleListAssets(_ context.Context, req mcp.CallToolRequest, txlogClient *c
 	}
 
 	return mcp.NewToolResultText(formatAssets(filtered)), nil
+}
+
+// handleGetVulnerableAssets handles the get_vulnerable_assets tool call.
+func handleGetVulnerableAssets(_ context.Context, req mcp.CallToolRequest, txlogClient *client.Client) (*mcp.CallToolResult, error) {
+	assets, err := txlogClient.ListAssets()
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Error fetching assets: %v", err)), nil
+	}
+
+	var vulnerable []client.Asset
+	for _, asset := range assets {
+		if asset.CopyFail {
+			vulnerable = append(vulnerable, asset)
+		}
+	}
+
+	if len(vulnerable) == 0 {
+		return mcp.NewToolResultText("✅ No assets are known to be vulnerable to CVE-2026-31431 at this time."), nil
+	}
+
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("🚨 **%d assets are VULNERABLE to CVE-2026-31431 (Copy Fail):**\n\n", len(vulnerable)))
+	for _, asset := range vulnerable {
+		sb.WriteString(fmt.Sprintf("- **%s** (%s)\n", asset.Hostname, asset.OS))
+	}
+	sb.WriteString("\n**Critical Action Required:** These servers must have their kernels updated immediately. Use `txlog copyfail` on the servers for local verification.")
+
+	return mcp.NewToolResultText(sb.String()), nil
 }
 
 // handleGetAssetDetails handles the get_asset_details tool call.
@@ -274,6 +331,23 @@ func handleGetTransactionDetails(_ context.Context, req mcp.CallToolRequest, txl
 	return mcp.NewToolResultText(formatTransactionItems(items)), nil
 }
 
+// handleGetTransactionVulnerabilities handles the get_transaction_vulnerabilities tool call.
+func handleGetTransactionVulnerabilities(_ context.Context, req mcp.CallToolRequest, txlogClient *client.Client) (*mcp.CallToolResult, error) {
+	machineID := req.GetString("machine_id", "")
+	transactionID := req.GetInt("transaction_id", 0)
+
+	vulns, err := txlogClient.GetTransactionVulnerabilities(machineID, transactionID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Error fetching transaction vulnerabilities: %v", err)), nil
+	}
+
+	if len(vulns) == 0 {
+		return mcp.NewToolResultText("No known security vulnerabilities found for this transaction in the OSV database."), nil
+	}
+
+	return mcp.NewToolResultText(formatTransactionVulnerabilities(vulns)), nil
+}
+
 // formatAssets formats a list of assets for display.
 func formatAssets(assets []client.Asset) string {
 	var sb strings.Builder
@@ -293,7 +367,9 @@ func formatAssets(assets []client.Asset) string {
 	sb.WriteString("\n**Asset list:**\n")
 	for _, asset := range assets {
 		status := "✅"
-		if asset.NeedsRestarting {
+		if asset.CopyFail {
+			status = "🚨 (VULNERABLE: CVE-2026-31431)"
+		} else if asset.NeedsRestarting {
 			status = "⚠️ (needs restart)"
 		}
 		sb.WriteString(fmt.Sprintf("- **%s** | %s | Agent v%s %s\n",
@@ -311,7 +387,12 @@ func formatAssetDetails(asset *client.Asset, transactions []client.Transaction) 
 	sb.WriteString(fmt.Sprintf("- **Operating System:** %s\n", asset.OS))
 	sb.WriteString(fmt.Sprintf("- **Agent Version:** %s\n", asset.AgentVersion))
 
-	if asset.NeedsRestarting {
+	if asset.CopyFail {
+		sb.WriteString("- **Status:** 🚨 **VULNERABLE to CVE-2026-31431 (Copy Fail)**\n")
+		if asset.NeedsRestarting {
+			sb.WriteString("- **Note:** ⚠️ Also needs restart\n")
+		}
+	} else if asset.NeedsRestarting {
 		sb.WriteString("- **Status:** ⚠️ Needs restart\n")
 	} else {
 		sb.WriteString("- **Status:** ✅ OK\n")
@@ -375,6 +456,31 @@ func formatTransactionItems(items []client.TransactionItem) string {
 				version = item.Epoch + ":" + version
 			}
 			sb.WriteString(fmt.Sprintf("- %s-%s-%s.%s\n", item.Package, version, item.Release, item.Arch))
+		}
+		sb.WriteString("\n")
+	}
+
+	return sb.String()
+}
+
+// formatTransactionVulnerabilities formats transaction vulnerabilities for display.
+func formatTransactionVulnerabilities(vulns []client.TransactionVulnerability) string {
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("**Found %d vulnerabilities in this transaction:**\n\n", len(vulns)))
+
+	for _, v := range vulns {
+		typeLabel := "Introduced"
+		if v.Type == "fixed" {
+			typeLabel = "✅ FIXED"
+		} else {
+			typeLabel = "⚠️ INTRODUCED"
+		}
+
+		sb.WriteString(fmt.Sprintf("### %s (%s)\n", v.ID, typeLabel))
+		sb.WriteString(fmt.Sprintf("- **Severity:** %s (CVSS %.1f)\n", v.Severity, v.CvssScore))
+		sb.WriteString(fmt.Sprintf("- **Package:** %s-%s\n", v.Package, v.Version))
+		if v.Summary != "" {
+			sb.WriteString(fmt.Sprintf("- **Summary:** %s\n", v.Summary))
 		}
 		sb.WriteString("\n")
 	}

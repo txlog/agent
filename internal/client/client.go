@@ -314,3 +314,37 @@ func (c *Client) GetAssetByHostname(hostname string) (*Asset, error) {
 
 	return nil, fmt.Errorf("asset not found: %s", hostname)
 }
+
+// TransactionVulnerability represents a security vulnerability associated with a package change.
+type TransactionVulnerability struct {
+	ID        string  `json:"id"`
+	Summary   string  `json:"summary"`
+	Severity  string  `json:"severity"`
+	CvssScore float64 `json:"cvss_score"`
+	Package   string  `json:"package"`
+	Version   string  `json:"version"`
+	Type      string  `json:"type"`
+}
+
+// GetTransactionVulnerabilities retrieves security vulnerabilities for a specific transaction.
+func (c *Client) GetTransactionVulnerabilities(machineID string, transactionID int) ([]TransactionVulnerability, error) {
+	resp, err := c.newRequest().
+		SetQueryParam("machine_id", machineID).
+		SetQueryParam("transaction_id", fmt.Sprintf("%d", transactionID)).
+		Get("/v1/vulnerabilities")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get transaction vulnerabilities: %w", err)
+	}
+
+	if resp.StatusCode() != 200 {
+		return nil, fmt.Errorf("server returned status %d: %s", resp.StatusCode(), resp.String())
+	}
+
+	var vulns []TransactionVulnerability
+	if err := json.Unmarshal(resp.Body(), &vulns); err != nil {
+		return nil, fmt.Errorf("failed to parse vulnerabilities response: %w", err)
+	}
+
+	return vulns, nil
+}
+

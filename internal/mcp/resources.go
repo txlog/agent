@@ -66,6 +66,40 @@ func registerResources(s *server.MCPServer, txlogClient *client.Client) {
 		},
 	)
 
+	// Resource: txlog://assets/vulnerable
+	s.AddResource(
+		mcp.NewResource(
+			"txlog://assets/vulnerable",
+			"List of assets vulnerable to CVE-2026-31431",
+			mcp.WithMIMEType("application/json"),
+		),
+		func(ctx context.Context, req mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
+			assets, err := txlogClient.ListAssets()
+			if err != nil {
+				return nil, fmt.Errorf("failed to list assets: %w", err)
+			}
+
+			var vulnerable []client.Asset
+			for _, asset := range assets {
+				if asset.CopyFail {
+					vulnerable = append(vulnerable, asset)
+				}
+			}
+
+			data, err := json.MarshalIndent(vulnerable, "", "  ")
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal assets: %w", err)
+			}
+
+			return []mcp.ResourceContents{
+				mcp.TextResourceContents{
+					URI:  req.Params.URI,
+					Text: string(data),
+				},
+			}, nil
+		},
+	)
+
 	// Resource: txlog://version
 	s.AddResource(
 		mcp.NewResource(
