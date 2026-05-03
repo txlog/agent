@@ -377,6 +377,19 @@ func saveExecution(success bool, machineId, hostname, details string, processed,
 		}
 	}
 
+	// Check if server supports CopyFail detection (requires version >= 1.29.0)
+	if serverVersion != "unknown" {
+		sv, err := semver.NewVersion(serverVersion)
+		minCopyFailVersion := semver.MustParse("1.29.0")
+
+		if err == nil && !sv.LessThan(minCopyFailVersion) {
+			copyFailResult := util.CheckCopyFail()
+			body["copy_fail"] = copyFailResult.Vulnerable
+			body["copy_fail_escalation"] = copyFailResult.EscalationConfirmed
+			body["copy_fail_details"] = copyFailResult.Description
+		}
+	}
+
 	client := resty.New()
 	client.SetTimeout(30 * time.Second)
 	request := client.R().

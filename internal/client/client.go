@@ -18,6 +18,7 @@ type Asset struct {
 	OS              string `json:"os"`
 	AgentVersion    string `json:"agent_version"`
 	NeedsRestarting bool   `json:"needs_restarting"`
+	CopyFail        bool   `json:"copy_fail"`
 	CreatedAt       string `json:"created_at"`
 	UpdatedAt       string `json:"updated_at"`
 }
@@ -53,6 +54,7 @@ type Execution struct {
 	OS              string `json:"os"`
 	AgentVersion    string `json:"agent_version"`
 	NeedsRestarting bool   `json:"needs_restarting"`
+	CopyFail        bool   `json:"copy_fail"`
 	ExecutedAt      string `json:"executed_at"`
 }
 
