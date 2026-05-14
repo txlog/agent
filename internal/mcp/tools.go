@@ -35,7 +35,7 @@ func registerTools(s *server.MCPServer, txlogClient *client.Client, compatibilit
 			mcp.Description("Filter by txlog agent version"),
 		),
 		mcp.WithBoolean("vulnerable",
-			mcp.Description("Filter only assets with critical vulnerabilities (e.g., CVE-2026-31431)"),
+			mcp.Description("Filter only assets with critical vulnerabilities (Copy Fail, Dirty Frag, Fragnesia)"),
 		),
 	)
 
@@ -77,7 +77,7 @@ func registerTools(s *server.MCPServer, txlogClient *client.Client, compatibilit
 
 	// Tool: get_vulnerable_assets
 	vulnerableTool := mcp.NewTool("get_vulnerable_assets",
-		mcp.WithDescription("Lists all assets that are vulnerable to critical security issues (e.g., CVE-2026-31431)"),
+		mcp.WithDescription("Lists all assets that are vulnerable to critical security issues (Copy Fail, Dirty Frag, Fragnesia)"),
 	)
 
 	s.AddTool(vulnerableTool, wrapHandler(handleGetVulnerableAssets))
@@ -161,7 +161,7 @@ func handleListAssets(_ context.Context, req mcp.CallToolRequest, txlogClient *c
 		if agentVersionFilter != "" && asset.AgentVersion != agentVersionFilter {
 			continue
 		}
-		if vulnerableFilter && !asset.CopyFail {
+		if vulnerableFilter && !asset.CopyFail && !asset.DirtyFrag && !asset.Fragnesia {
 			continue
 		}
 		filtered = append(filtered, asset)
@@ -183,7 +183,7 @@ func handleGetVulnerableAssets(_ context.Context, req mcp.CallToolRequest, txlog
 
 	var vulnerable []client.Asset
 	for _, asset := range assets {
-		if asset.CopyFail {
+		if asset.CopyFail || asset.DirtyFrag || asset.Fragnesia {
 			vulnerable = append(vulnerable, asset)
 		}
 	}
@@ -193,11 +193,21 @@ func handleGetVulnerableAssets(_ context.Context, req mcp.CallToolRequest, txlog
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("🚨 **%d assets are VULNERABLE to CVE-2026-31431 (Copy Fail):**\n\n", len(vulnerable)))
+	sb.WriteString(fmt.Sprintf("🚨 **%d assets have kernel vulnerabilities:**\n\n", len(vulnerable)))
 	for _, asset := range vulnerable {
-		sb.WriteString(fmt.Sprintf("- **%s** (%s)\n", asset.Hostname, asset.OS))
+		var vulns []string
+		if asset.CopyFail {
+			vulns = append(vulns, "Copy Fail")
+		}
+		if asset.DirtyFrag {
+			vulns = append(vulns, "Dirty Frag")
+		}
+		if asset.Fragnesia {
+			vulns = append(vulns, "Fragnesia")
+		}
+		sb.WriteString(fmt.Sprintf("- **%s** (%s) — %s\n", asset.Hostname, asset.OS, strings.Join(vulns, ", ")))
 	}
-	sb.WriteString("\n**Critical Action Required:** These servers must have their kernels updated immediately. Use `txlog copyfail` on the servers for local verification.")
+	sb.WriteString("\n**Critical Action Required:** These servers must have their kernels updated immediately. Use `txlog failures` on the servers for local verification.")
 
 	return mcp.NewToolResultText(sb.String()), nil
 }
@@ -367,8 +377,18 @@ func formatAssets(assets []client.Asset) string {
 	sb.WriteString("\n**Asset list:**\n")
 	for _, asset := range assets {
 		status := "✅"
-		if asset.CopyFail {
-			status = "🚨 (VULNERABLE: CVE-2026-31431)"
+		if asset.CopyFail || asset.DirtyFrag || asset.Fragnesia {
+			var vulns []string
+			if asset.CopyFail {
+				vulns = append(vulns, "Copy Fail")
+			}
+			if asset.DirtyFrag {
+				vulns = append(vulns, "Dirty Frag")
+			}
+			if asset.Fragnesia {
+				vulns = append(vulns, "Fragnesia")
+			}
+			status = fmt.Sprintf("🚨 (VULNERABLE: %s)", strings.Join(vulns, ", "))
 		} else if asset.NeedsRestarting {
 			status = "⚠️ (needs restart)"
 		}
@@ -387,8 +407,18 @@ func formatAssetDetails(asset *client.Asset, transactions []client.Transaction) 
 	sb.WriteString(fmt.Sprintf("- **Operating System:** %s\n", asset.OS))
 	sb.WriteString(fmt.Sprintf("- **Agent Version:** %s\n", asset.AgentVersion))
 
-	if asset.CopyFail {
-		sb.WriteString("- **Status:** 🚨 **VULNERABLE to CVE-2026-31431 (Copy Fail)**\n")
+	if asset.CopyFail || asset.DirtyFrag || asset.Fragnesia {
+		var vulns []string
+		if asset.CopyFail {
+			vulns = append(vulns, "Copy Fail (CVE-2026-31431)")
+		}
+		if asset.DirtyFrag {
+			vulns = append(vulns, "Dirty Frag")
+		}
+		if asset.Fragnesia {
+			vulns = append(vulns, "Fragnesia")
+		}
+		sb.WriteString(fmt.Sprintf("- **Status:** 🚨 **VULNERABLE: %s**\n", strings.Join(vulns, ", ")))
 		if asset.NeedsRestarting {
 			sb.WriteString("- **Note:** ⚠️ Also needs restart\n")
 		}

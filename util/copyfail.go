@@ -101,7 +101,7 @@ func CheckCopyFail() CopyFailResult {
 	details = append(details, "VULNERABLE: page cache write confirmed on temp file")
 
 	// Phase 2: Check privilege escalation conditions
-	escalation, target, phase2Details := checkEscalationConditions()
+	escalation, target, phase2Details := CheckEscalationConditions()
 	details = append(details, phase2Details...)
 
 	desc := "Vulnerable to CVE-2026-31431 (Copy Fail)"
@@ -313,9 +313,9 @@ func testPageCacheWrite(filePath string, marker []byte) (bool, error) {
 	return false, nil
 }
 
-// checkEscalationConditions verifies Phase 2 conditions for privilege escalation.
+// CheckEscalationConditions verifies Phase 2 conditions for privilege escalation.
 // Returns (escalationPossible, targetBinary, details).
-func checkEscalationConditions() (bool, string, []string) {
+func CheckEscalationConditions() (bool, string, []string) {
 	var details []string
 
 	// Step 1: Find setuid-root binaries

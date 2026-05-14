@@ -390,6 +390,20 @@ func saveExecution(success bool, machineId, hostname, details string, processed,
 		}
 	}
 
+	// Check if server supports DirtyFrag/Fragnesia detection (requires version >= 1.31.0)
+	if serverVersion != "unknown" {
+		sv, err := semver.NewVersion(serverVersion)
+		minDirtyFragVersion := semver.MustParse("1.31.0")
+
+		if err == nil && !sv.LessThan(minDirtyFragVersion) {
+			dirtyFragResult := util.CheckDirtyFrag()
+			body["dirty_frag"] = dirtyFragResult.Vulnerable
+
+			fragnesiaResult := util.CheckFragnesia()
+			body["fragnesia"] = fragnesiaResult.Vulnerable
+		}
+	}
+
 	client := resty.New()
 	client.SetTimeout(30 * time.Second)
 	request := client.R().

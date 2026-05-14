@@ -70,7 +70,7 @@ func registerResources(s *server.MCPServer, txlogClient *client.Client) {
 	s.AddResource(
 		mcp.NewResource(
 			"txlog://assets/vulnerable",
-			"List of assets vulnerable to CVE-2026-31431",
+			"List of assets vulnerable to kernel exploits (Copy Fail, Dirty Frag, Fragnesia)",
 			mcp.WithMIMEType("application/json"),
 		),
 		func(ctx context.Context, req mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
@@ -81,7 +81,7 @@ func registerResources(s *server.MCPServer, txlogClient *client.Client) {
 
 			var vulnerable []client.Asset
 			for _, asset := range assets {
-				if asset.CopyFail {
+				if asset.CopyFail || asset.DirtyFrag || asset.Fragnesia {
 					vulnerable = append(vulnerable, asset)
 				}
 			}

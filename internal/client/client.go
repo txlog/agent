@@ -19,6 +19,8 @@ type Asset struct {
 	AgentVersion    string `json:"agent_version"`
 	NeedsRestarting bool   `json:"needs_restarting"`
 	CopyFail        bool   `json:"copy_fail"`
+	DirtyFrag       bool   `json:"dirty_frag"`
+	Fragnesia       bool   `json:"fragnesia"`
 	CreatedAt       string `json:"created_at"`
 	UpdatedAt       string `json:"updated_at"`
 }
@@ -55,6 +57,8 @@ type Execution struct {
 	AgentVersion    string `json:"agent_version"`
 	NeedsRestarting bool   `json:"needs_restarting"`
 	CopyFail        bool   `json:"copy_fail"`
+	DirtyFrag       bool   `json:"dirty_frag"`
+	Fragnesia       bool   `json:"fragnesia"`
 	ExecutedAt      string `json:"executed_at"`
 }
 
