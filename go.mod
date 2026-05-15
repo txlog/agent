@@ -1,6 +1,6 @@
 module github.com/txlog/agent
 
-go 1.26.2
+go 1.26.3
 
 require github.com/fatih/color v1.19.0
 
@@ -33,7 +33,7 @@ require (
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	golang.org/x/net v0.46.0 // indirect
+	golang.org/x/net v0.53.0 // indirect
 	golang.org/x/sys v0.44.0
-	golang.org/x/text v0.30.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 )
