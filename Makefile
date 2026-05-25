@@ -11,7 +11,6 @@ all:
 	@echo "  build          Compile a binary"
 	@echo "  man            Compile the 'txlog' manpage"
 	@echo "  rpm            Create the RPM package"
-	@echo "  mcp-inspector  Run MCP inspector"
 
 .PHONY: clean
 clean:
@@ -42,6 +41,3 @@ rpm:
 	@VERSION=$(VERSION) nfpm pkg --packager rpm --target ./bin/
 	@rm -f ./bin/txlog
 
-.PHONY: mcp-inspector
-mcp-inspector:
-	@npx @modelcontextprotocol/inspector
