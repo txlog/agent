@@ -200,8 +200,6 @@ func ValidateServerVersionForAPIKey() error {
 	return nil
 }
 
-
-
 // CheckUpdate compares the current version with the latest version.
 // Returns true if the latest version is greater than the current version.
 func CheckUpdate(currentStr, latestStr string) (bool, error) {
