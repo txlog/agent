@@ -295,10 +295,10 @@ sudo dnf install -y --exclude=goreleaser-pro goreleaser nfpm
 ### Pandoc
 
 ```bash
-wget https://github.com/jgm/pandoc/releases/download/3.9/pandoc-3.9-linux-amd64.tar.gz
-tar zxvf pandoc-3.9-linux-amd64.tar.gz
-sudo mv pandoc-3.9/bin/pandoc /usr/bin/pandoc
-rm -rf pandoc-3.9*
+wget https://github.com/jgm/pandoc/releases/download/3.10.2/pandoc-3.10.2-linux-amd64.tar.gz
+tar zxvf pandoc-3.10.2-linux-amd64.tar.gz
+sudo mv pandoc-3.10.2/bin/pandoc /usr/bin/pandoc
+rm -rf pandoc-*
 ```
 
 ### Development commands
