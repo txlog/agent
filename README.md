@@ -30,13 +30,6 @@ analytics. By aggregating and processing package history, the Agent provides
 actionable insights for system administrators to optimize their RPM-based
 systems.
 
-This agent also implements the [Model Context Protocol
-(MCP)](https://modelcontextprotocol.io), allowing AI assistants and LLMs to
-directly query the transaction logs. Through MCP, the agent exposes tools to
-search package history, analyze installation trends, and retrieve system state
-information, enabling natural language questions about your infrastructure's
-package management history.
-
 ## Installation
 
 ```bash
