@@ -123,7 +123,7 @@ func init() {
 }
 
 // getSavedTransactions retrieves transaction IDs from a remote server for a given machine ID and hostname.
-// It makes an HTTP GET request to the configured server endpoint with the machine ID and hostname in the request body.
+// It makes an HTTP GET request to the configured server endpoint with the machine ID and hostname as query parameters.
 //
 // Parameters:
 //   - machineId: string containing the unique identifier for the machine
@@ -137,12 +137,11 @@ func init() {
 func getSavedTransactions(machineId, hostname string) ([]int, int, error) {
 	client := resty.New()
 	client.SetTimeout(30 * time.Second)
-	client.SetAllowGetMethodPayload(true)
 
 	var transactions []int
 	request := client.R().
 		SetHeader("Content-Type", "application/json").
-		SetBody(map[string]string{
+		SetQueryParams(map[string]string{
 			"machine_id": machineId,
 			"hostname":   hostname,
 		}).
