@@ -133,7 +133,7 @@ func PackageBinary() string {
 
 	// Read /etc/os-release line-by-line
 	releaseData, _ := os.ReadFile("/etc/os-release")
-	for _, line := range strings.Split(string(releaseData), "\n") {
+	for line := range strings.SplitSeq(string(releaseData), "\n") {
 		match := reVersionID.FindStringSubmatch(line)
 		if len(match) > 1 {
 			versionID := match[1]

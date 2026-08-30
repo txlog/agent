@@ -67,9 +67,9 @@ func getLines() ([]string, error) {
 
 	lines := make([]string, 0)
 
-	for _, line := range strings.Split(string(output), "\n") {
+	for line := range strings.SplitSeq(string(output), "\n") {
 
-		switch true {
+		switch {
 		case line == "":
 			continue
 		case []byte(line)[0] == '#':

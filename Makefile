@@ -1,4 +1,5 @@
 VERSION := $(shell cat .version)
+ARCH ?= amd64
 
 .PHONY: all
 all:
@@ -11,6 +12,8 @@ all:
 	@echo "  build          Compile a binary"
 	@echo "  man            Compile the 'txlog' manpage"
 	@echo "  rpm            Create the RPM package"
+	@echo ""
+	@echo "Use ARCH=arm64 (Raspberry Pi) or ARCH=amd64 (default) with build/rpm."
 
 .PHONY: clean
 clean:
@@ -27,7 +30,7 @@ vet:
 
 .PHONY: build
 build:
-	@CGO_ENABLED=0 GOOS="linux" GOARCH="amd64" GOAMD64="v2" go build -ldflags="-s -w -extldflags=-static -X 'github.com/txlog/agent/cmd.agentVersion=$(VERSION)'" -trimpath -o bin/txlog
+	@CGO_ENABLED=0 GOOS="linux" GOARCH="$(ARCH)" GOAMD64="v2" go build -ldflags="-s -w -extldflags=-static -X 'github.com/txlog/agent/cmd.agentVersion=$(VERSION)'" -trimpath -o bin/txlog
 
 .PHONY: man
 man:
@@ -38,6 +41,6 @@ man:
 
 .PHONY: rpm
 rpm:
-	@VERSION=$(VERSION) nfpm pkg --packager rpm --target ./bin/
+	@VERSION=$(VERSION) ARCH=$(ARCH) nfpm pkg --packager rpm --target ./bin/
 	@rm -f ./bin/txlog
 

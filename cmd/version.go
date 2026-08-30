@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -172,7 +173,7 @@ func ValidateServerVersionForAPIKey() error {
 	// If there's an error getting the version, return it directly
 	if err != nil {
 		// Check if it's an authentication error
-		if serverErr, ok := err.(*ServerVersionError); ok {
+		if serverErr, ok := errors.AsType[*ServerVersionError](err); ok {
 			return serverErr
 		}
 		return err
@@ -250,7 +251,7 @@ func CheckUpdateSource(packageName string) string {
 	err := cmd.Run()
 
 	// Check the Exit Code
-	if exitError, ok := err.(*exec.ExitError); ok {
+	if exitError, ok := errors.AsType[*exec.ExitError](err); ok {
 		exitCode := exitError.ExitCode()
 
 		// Exit code 100 in DNF specifically means:

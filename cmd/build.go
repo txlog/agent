@@ -219,7 +219,7 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 
 				request := client.R().
 					SetHeader("Content-Type", "application/json").
-					SetBody(map[string]interface{}{
+					SetBody(map[string]any{
 						"transaction_id":   transactionID,
 						"machine_id":       machineId,
 						"hostname":         hostname,
@@ -267,13 +267,10 @@ func getTransactionItems(transactionID string) (TransactionDetail, error) {
 		return TransactionDetail{}, err
 	}
 
-	output := string(out)
-	lines := strings.Split(output, "\n")
-
 	var transaction TransactionDetail
 	var packages []Package
 	var scriptletOutput []string
-	for _, line := range lines {
+	for line := range strings.SplitSeq(string(out), "\n") {
 		if matches := rePackageInstall.FindStringSubmatch(line); matches != nil {
 			name, version, release, epoch, arch := util.SplitPackageName(strings.TrimSpace(matches[2]))
 			pkg := Package{
@@ -352,7 +349,7 @@ func saveExecution(success bool, machineId, hostname, details string, processed,
 	// * retrieves the server version
 	serverVersion := GetServerVersion()
 
-	body := map[string]interface{}{
+	body := map[string]any{
 		"machine_id":             machineId,
 		"hostname":               hostname,
 		"executed_at":            time.Now().Format("2006-01-02T15:04:05Z07:00"),

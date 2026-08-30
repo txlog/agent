@@ -1,5 +1,5 @@
 name: "txlog"
-arch: "amd64"
+arch: "${ARCH}"
 platform: "linux"
 version: "${VERSION}"
 release: "1"
