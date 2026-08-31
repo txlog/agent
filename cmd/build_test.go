@@ -86,3 +86,24 @@ func TestParseHistoryLineIgnoresHeader(t *testing.T) {
 		}
 	}
 }
+
+// TestParseAltered covers the status flags dnf appends to the Altered column,
+// taken from the real history of a long lived host.
+func TestParseAltered(t *testing.T) {
+	tests := map[string]string{
+		"   1   ":   "1",
+		"  22   ":   "22",
+		" 1295 EE ": "1295",
+		"   1 >":    "1",
+		"   2 ><":   "2",
+		"   4 *":    "4",
+		"   7 #":    "7",
+		"":          "",
+	}
+
+	for input, want := range tests {
+		if got := parseAltered(input); got != want {
+			t.Errorf("parseAltered(%q) = %q, want %q", input, got, want)
+		}
+	}
+}

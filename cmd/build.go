@@ -212,7 +212,7 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 						"begin_time":       details.BeginTime,
 						"end_time":         details.EndTime,
 						"actions":          strings.TrimSpace(matches[4]),
-						"altered":          strings.TrimSpace(matches[5]),
+						"altered":          parseAltered(matches[5]),
 						"user":             details.User,
 						"return_code":      details.ReturnCode,
 						"release_version":  details.Releasever,
@@ -239,6 +239,15 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 	}
 
 	return entriesProcessed, entriesSent, nil
+}
+
+// parseAltered extracts the package count from the Altered column of
+// 'dnf history list'. Dnf appends status flags to that column ("1295 EE",
+// "2 ><"), which describe the transaction rather than the count, so they are
+// trimmed off. Trimming rather than matching digits keeps an unexpected value
+// from silently dropping the whole transaction.
+func parseAltered(field string) string {
+	return strings.TrimSpace(strings.TrimRight(strings.TrimSpace(field), "><*#E"))
 }
 
 func getTransactionItems(transactionID string) (TransactionDetail, error) {
