@@ -94,3 +94,64 @@ func TestSetAuthentication_APIKeyPreferredOverBasicAuth(t *testing.T) {
 	// (We can't verify the Authorization header directly, but we know the function
 	// returns early when API key is set, so basic auth is never configured)
 }
+
+// TestSplitPackageName covers the NEVRA shapes dnf produces, including the
+// truncated ones that hit the function's early returns.
+func TestSplitPackageName(t *testing.T) {
+	tests := []struct {
+		packageName                            string
+		name, version, release, epoch, archStr string
+	}{
+		{
+			packageName: "bash-5.1.8-9.el9.x86_64",
+			name:        "bash", version: "5.1.8", release: "9.el9", epoch: "", archStr: "x86_64",
+		},
+		{
+			// The epoch belongs in its own field, not glued to the version.
+			packageName: "grub2-common-1:2.06-95.el9.noarch",
+			name:        "grub2-common", version: "2.06", release: "95.el9", epoch: "1", archStr: "noarch",
+		},
+		{
+			// Name with a dash, release with several dots.
+			packageName: "kernel-core-5.14.0-570.12.1.el9_6.x86_64",
+			name:        "kernel-core", version: "5.14.0", release: "570.12.1.el9_6", epoch: "", archStr: "x86_64",
+		},
+		{
+			// The .rpm suffix is optional and trimmed.
+			packageName: "python3-dnf-4.14.0-9.el9.noarch.rpm",
+			name:        "python3-dnf", version: "4.14.0", release: "9.el9", epoch: "", archStr: "noarch",
+		},
+		{
+			// No dot at all: everything is the name.
+			packageName: "some-package",
+			name:        "some-package", version: "", release: "", epoch: "", archStr: "",
+		},
+		{
+			// A dot but no dash: name plus arch only.
+			packageName: "package.x86_64",
+			name:        "package", version: "", release: "", epoch: "", archStr: "x86_64",
+		},
+		{
+			// One dash: no version to be found, only a release.
+			packageName: "package-1.el9.noarch",
+			name:        "package", version: "", release: "1.el9", epoch: "", archStr: "noarch",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.packageName, func(t *testing.T) {
+			name, version, release, epoch, arch := SplitPackageName(tt.packageName)
+			for _, f := range []struct{ field, got, want string }{
+				{"name", name, tt.name},
+				{"version", version, tt.version},
+				{"release", release, tt.release},
+				{"epoch", epoch, tt.epoch},
+				{"arch", arch, tt.archStr},
+			} {
+				if f.got != f.want {
+					t.Errorf("%s = %q, want %q", f.field, f.got, f.want)
+				}
+			}
+		})
+	}
+}

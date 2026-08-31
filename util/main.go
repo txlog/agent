@@ -100,14 +100,12 @@ func SplitPackageName(packageName string) (name, version, release, epoch, arch s
 		return packageName[:relIndex], "", release, "", arch
 	}
 	version = packageName[verIndex+1 : relIndex]
+	name = packageName[:verIndex]
 
-	epochIndex := strings.Index(packageName, ":")
-	if epochIndex == -1 {
-		epoch = ""
-		name = packageName[0:verIndex]
-	} else {
-		epoch = packageName[strings.LastIndex(packageName[:relIndex], "-")+1 : epochIndex]
-		name = packageName[:verIndex]
+	// In a NEVRA the epoch prefixes the version, as in "1:2.06". Split it off
+	// so it is not reported in both fields.
+	if epochIndex := strings.Index(version, ":"); epochIndex != -1 {
+		epoch, version = version[:epochIndex], version[epochIndex+1:]
 	}
 
 	return
