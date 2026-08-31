@@ -105,7 +105,7 @@ func verifyDataIntegrity(machineId, hostname string) (*VerificationResult, error
 
 	// Get server transactions
 	fmt.Fprintf(os.Stdout, "Retrieving server transactions...\n")
-	serverTransactionIDs, _, err := getSavedTransactions(machineId, hostname)
+	serverTransactionIDs, err := getSavedTransactions(machineId, hostname)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving server transactions: %w", err)
 	}
@@ -251,30 +251,30 @@ func compareTransactionItems(localPackages, serverPackages []Package) ([]Package
 	missing := make([]Package, 0)
 	extra := make([]Package, 0)
 
-	// Create a map of server packages for quick lookup
-	serverPkgMap := make(map[string]Package)
+	key := func(pkg Package) string {
+		return fmt.Sprintf("%s|%s|%s|%s|%s|%s|%s", pkg.Action, pkg.Name, pkg.Version, pkg.Release, pkg.Epoch, pkg.Arch, pkg.Repo)
+	}
+
+	serverPkgs := make(map[string]struct{}, len(serverPackages))
 	for _, pkg := range serverPackages {
-		key := fmt.Sprintf("%s|%s|%s|%s|%s|%s|%s", pkg.Action, pkg.Name, pkg.Version, pkg.Release, pkg.Epoch, pkg.Arch, pkg.Repo)
-		serverPkgMap[key] = pkg
+		serverPkgs[key(pkg)] = struct{}{}
 	}
 
-	// Create a map of local packages
-	localPkgMap := make(map[string]Package)
+	localPkgs := make(map[string]struct{}, len(localPackages))
 	for _, pkg := range localPackages {
-		key := fmt.Sprintf("%s|%s|%s|%s|%s|%s|%s", pkg.Action, pkg.Name, pkg.Version, pkg.Release, pkg.Epoch, pkg.Arch, pkg.Repo)
-		localPkgMap[key] = pkg
+		localPkgs[key(pkg)] = struct{}{}
 	}
 
-	// Check for missing packages (in local but not in server)
-	for key, pkg := range localPkgMap {
-		if _, exists := serverPkgMap[key]; !exists {
+	// In local but not on the server
+	for _, pkg := range localPackages {
+		if _, exists := serverPkgs[key(pkg)]; !exists {
 			missing = append(missing, pkg)
 		}
 	}
 
-	// Check for extra packages (in server but not in local)
-	for key, pkg := range serverPkgMap {
-		if _, exists := localPkgMap[key]; !exists {
+	// On the server but not local
+	for _, pkg := range serverPackages {
+		if _, exists := localPkgs[key(pkg)]; !exists {
 			extra = append(extra, pkg)
 		}
 	}
@@ -284,31 +284,27 @@ func compareTransactionItems(localPackages, serverPackages []Package) ([]Package
 
 // printVerificationResults prints a summary of the verification results
 func printVerificationResults(result *VerificationResult) {
+	// A zero count is good news and prints green; anything else uses the colour
+	// matching the severity of that row.
+	printCount := func(label string, count int, highlight func(string, ...any) string) {
+		value := color.GreenString("0")
+		if count > 0 {
+			value = highlight("%d", count)
+		}
+		fmt.Fprintf(os.Stdout, "%-26s %s\n", label, value)
+	}
+
 	fmt.Fprintln(os.Stdout, strings.Repeat("=", 60))
 	fmt.Fprintln(os.Stdout, "VERIFICATION SUMMARY")
 	fmt.Fprintln(os.Stdout, strings.Repeat("=", 60))
-	fmt.Fprintf(os.Stdout, "Total local transactions:  %s\n", color.CyanString("%d", result.TotalLocalTransactions))
-	fmt.Fprintf(os.Stdout, "Total server transactions: %s\n", color.CyanString("%d", result.TotalServerTransactions))
-	fmt.Fprintf(os.Stdout, "Fully verified:            %s\n", color.GreenString("%d", result.FullyVerified))
+	fmt.Fprintf(os.Stdout, "%-26s %s\n", "Total local transactions:", color.CyanString("%d", result.TotalLocalTransactions))
+	fmt.Fprintf(os.Stdout, "%-26s %s\n", "Total server transactions:", color.CyanString("%d", result.TotalServerTransactions))
+	fmt.Fprintf(os.Stdout, "%-26s %s\n", "Fully verified:", color.GreenString("%d", result.FullyVerified))
 	fmt.Fprintln(os.Stdout, strings.Repeat("-", 60))
 
-	if len(result.MissingOnServer) > 0 {
-		fmt.Fprintf(os.Stdout, "Missing on server:         %s\n", color.RedString("%d", len(result.MissingOnServer)))
-	} else {
-		fmt.Fprintf(os.Stdout, "Missing on server:         %s\n", color.GreenString("0"))
-	}
-
-	if len(result.WithMissingItems) > 0 {
-		fmt.Fprintf(os.Stdout, "With missing items:        %s\n", color.RedString("%d", len(result.WithMissingItems)))
-	} else {
-		fmt.Fprintf(os.Stdout, "With missing items:        %s\n", color.GreenString("0"))
-	}
-
-	if len(result.WithExtraItems) > 0 {
-		fmt.Fprintf(os.Stdout, "With extra items:          %s\n", color.YellowString("%d", len(result.WithExtraItems)))
-	} else {
-		fmt.Fprintf(os.Stdout, "With extra items:          %s\n", color.GreenString("0"))
-	}
+	printCount("Missing on server:", len(result.MissingOnServer), color.RedString)
+	printCount("With missing items:", len(result.WithMissingItems), color.RedString)
+	printCount("With extra items:", len(result.WithExtraItems), color.YellowString)
 
 	fmt.Fprintln(os.Stdout, strings.Repeat("=", 60))
 

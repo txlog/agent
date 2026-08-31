@@ -16,11 +16,8 @@ import (
 
 // TransactionDetail represents a detailed transaction entry, as shown in the 'dnf history info' command.
 type TransactionDetail struct {
-	TransactionID   string    `json:"transaction_id"`
 	BeginTime       string    `json:"begin_time"`
-	BeginRPMDB      string    `json:"begin_rpmdb"`
 	EndTime         string    `json:"end_time"`
-	EndRPMDB        string    `json:"end_rpmdb"`
 	User            string    `json:"user"`
 	ReturnCode      string    `json:"return_code"`
 	Releasever      string    `json:"releasever"`
@@ -77,7 +74,7 @@ command, and sends them to the server so they can be queried later.`,
 
 		// * retrieves a list of all transactions saved on the server for this `machine-id`
 		fmt.Fprintf(os.Stdout, "📥 Retrieving saved transactions...\n")
-		savedTransactions, savedCount, err := getSavedTransactions(machineId, hostname)
+		savedTransactions, err := getSavedTransactions(machineId, hostname)
 		if err != nil {
 			color.Red("✗ Error retrieving saved transactions: %v", err)
 			if execErr := saveExecution(false, machineId, hostname, err.Error(), 0, 0); execErr != nil {
@@ -85,7 +82,7 @@ command, and sends them to the server so they can be queried later.`,
 			}
 			os.Exit(1)
 		}
-		fmt.Fprintf(os.Stdout, "   Found %s saved transactions on server\n\n", color.YellowString("%d", savedCount))
+		fmt.Fprintf(os.Stdout, "   Found %s saved transactions on server\n\n", color.YellowString("%d", len(savedTransactions)))
 
 		fmt.Fprintf(os.Stdout, "⚙️  Compiling transaction data...\n")
 		// * compares the transaction lists to determine which transactions have not been sent to the server
@@ -132,10 +129,9 @@ func init() {
 //
 // Returns:
 //   - []int: slice of transaction IDs retrieved from the server
-//   - int: number of transactions retrieved
 //   - error: nil if successful, otherwise contains error information
 //     Possible errors include network failures or non-200 HTTP status codes
-func getSavedTransactions(machineId, hostname string) ([]int, int, error) {
+func getSavedTransactions(machineId, hostname string) ([]int, error) {
 	var transactions []int
 	response, err := util.APIRequest().
 		SetQueryParams(map[string]string{
@@ -146,14 +142,14 @@ func getSavedTransactions(machineId, hostname string) ([]int, int, error) {
 		Get("/v1/transactions/ids")
 
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	if err := util.CheckStatus(response); err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
-	return transactions, len(transactions), nil
+	return transactions, nil
 }
 
 // saveUnsentTransactions processes DNF transaction history and sends unsent transactions to a remote server.
@@ -288,24 +284,18 @@ func getTransactionItems(transactionID string) (TransactionDetail, error) {
 			key := strings.TrimSpace(matches[1])
 			value := strings.TrimSpace(matches[2])
 			switch key {
-			case "Transaction ID":
-				transaction.TransactionID = value
 			case "Begin time":
 				beginTime, err := util.DateConversion(value)
 				if err != nil {
 					return TransactionDetail{}, err
 				}
 				transaction.BeginTime = beginTime
-			case "Begin rpmdb":
-				transaction.BeginRPMDB = value
 			case "End time":
 				endTime, err := util.DateConversion(strings.Split(value, " (")[0])
 				if err != nil {
 					return TransactionDetail{}, err
 				}
 				transaction.EndTime = endTime
-			case "End rpmdb":
-				transaction.EndRPMDB = value
 			case "User":
 				transaction.User = value
 			case "Return-Code":
