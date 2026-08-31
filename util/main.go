@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -114,9 +113,6 @@ func SplitPackageName(packageName string) (name, version, release, epoch, arch s
 	return
 }
 
-// reVersionID matches VERSION_ID in /etc/os-release to determine the OS major version
-var reVersionID = regexp.MustCompile(`VERSION_ID="([1-9][0-9]?)(?:\.[0-9]+)?"`)
-
 // PackageBinary determines and verifies the appropriate package manager binary (yum or dnf)
 // based on the Linux distribution version. It reads /etc/os-release to check if the system
 // is running RHEL/CentOS 8 or 9, in which case it selects 'dnf' instead of the default 'yum'.
@@ -131,18 +127,12 @@ var reVersionID = regexp.MustCompile(`VERSION_ID="([1-9][0-9]?)(?:\.[0-9]+)?"`)
 func PackageBinary() string {
 	binary := "yum"
 
-	// Read /etc/os-release line-by-line
-	releaseData, _ := os.ReadFile("/etc/os-release")
-	for line := range strings.SplitSeq(string(releaseData), "\n") {
-		match := reVersionID.FindStringSubmatch(line)
-		if len(match) > 1 {
-			versionID := match[1]
-			vID, _ := strconv.Atoi(versionID)
-			if vID >= 8 {
-				binary = "dnf"
-				break
-			}
-		}
+	// RHEL/CentOS 8 and later ship dnf. An unreadable or version-less
+	// os-release leaves the yum default in place.
+	release, _ := OSRelease()
+	major, _, _ := strings.Cut(release["VERSION_ID"], ".")
+	if versionID, err := strconv.Atoi(major); err == nil && versionID >= 8 {
+		binary = "dnf"
 	}
 
 	if !binaryInstalled(binary) {

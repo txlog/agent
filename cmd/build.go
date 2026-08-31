@@ -328,9 +328,9 @@ func getTransactionItems(transactionID string) (TransactionDetail, error) {
 
 // saveExecution sends the execution details to the server.
 func saveExecution(success bool, machineId, hostname, details string, processed, sent int) error {
-	err := util.ParseOSRelease()
+	release, err := util.OSRelease()
 	if err != nil {
-		return fmt.Errorf("error while reading /etc/os-release file: %w", err)
+		return fmt.Errorf("error while reading %s file: %w", util.Path, err)
 	}
 
 	// * retrieves the server version
@@ -345,7 +345,7 @@ func saveExecution(success bool, machineId, hostname, details string, processed,
 		"transactions_processed": processed,
 		"transactions_sent":      sent,
 		"agent_version":          agentVersion,
-		"os":                     util.Release.PrettyName,
+		"os":                     release["PRETTY_NAME"],
 	}
 
 	// Check if server supports needs_restarting feature (requires version >= 1.8.0)
