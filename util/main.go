@@ -51,16 +51,13 @@ func GetMachineId() (string, error) {
 	return machineID, nil
 }
 
-// GetHostname returns the system hostname by executing the hostname command.
-// It uses the /usr/bin/hostname command to obtain the hostname and returns it as a string.
-// Returns an error if the hostname command execution fails.
+// GetHostname returns the system hostname as reported by the kernel.
+// Returns an error if the hostname cannot be determined.
 func GetHostname() (string, error) {
-	out, err := exec.Command("/usr/bin/hostname").Output()
+	hostname, err := os.Hostname()
 	if err != nil {
-		return "", fmt.Errorf("error while executing hostname command: %w", err)
+		return "", fmt.Errorf("error while getting hostname: %w", err)
 	}
-
-	hostname := strings.TrimSpace(string(out))
 
 	return hostname, nil
 }
