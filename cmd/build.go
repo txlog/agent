@@ -10,9 +10,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/fatih/color"
-	"github.com/go-resty/resty/v2"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/txlog/agent/util"
 )
 
@@ -138,28 +136,21 @@ func init() {
 //   - error: nil if successful, otherwise contains error information
 //     Possible errors include network failures or non-200 HTTP status codes
 func getSavedTransactions(machineId, hostname string) ([]int, int, error) {
-	client := resty.New()
-	client.SetTimeout(30 * time.Second)
-
 	var transactions []int
-	request := client.R().
-		SetHeader("Content-Type", "application/json").
+	response, err := util.APIRequest().
 		SetQueryParams(map[string]string{
 			"machine_id": machineId,
 			"hostname":   hostname,
 		}).
-		SetResult(&transactions)
-
-	util.SetAuthentication(request)
-
-	response, err := request.Get(viper.GetString("server.url") + "/v1/transactions/ids")
+		SetResult(&transactions).
+		Get("/v1/transactions/ids")
 
 	if err != nil {
 		return nil, 0, err
 	}
 
-	if response.StatusCode() != 200 {
-		return nil, 0, fmt.Errorf("server returned status code %d: %s", response.StatusCode(), response.String())
+	if err := util.CheckStatus(response); err != nil {
+		return nil, 0, err
 	}
 
 	return transactions, len(transactions), nil
@@ -206,9 +197,6 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 		savedSet[fmt.Sprintf("%d", t)] = struct{}{}
 	}
 
-	client := resty.New()
-	client.SetTimeout(30 * time.Second)
-
 	for _, line := range lines {
 		matches := reHistoryLine.FindStringSubmatch(line)
 		if matches != nil {
@@ -220,8 +208,7 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 					return 0, 0, err
 				}
 
-				request := client.R().
-					SetHeader("Content-Type", "application/json").
+				response, err := util.APIRequest().
 					SetBody(map[string]any{
 						"transaction_id":   transactionID,
 						"machine_id":       machineId,
@@ -237,18 +224,15 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 						"comment":          details.Comment,
 						"scriptlet_output": strings.Join(details.ScriptletOutput, "\n"),
 						"items":            details.PackagesAltered,
-					})
-
-				util.SetAuthentication(request)
-
-				response, err := request.Post(viper.GetString("server.url") + "/v1/transactions")
+					}).
+					Post("/v1/transactions")
 
 				if err != nil {
 					return 0, 0, err
 				}
 
-				if response.StatusCode() != 200 {
-					return 0, 0, fmt.Errorf("server returned status code %d", response.StatusCode())
+				if err := util.CheckStatus(response); err != nil {
+					return 0, 0, err
 				}
 
 				entriesSent++
@@ -376,23 +360,11 @@ func saveExecution(success bool, machineId, hostname, details string, processed,
 		}
 	}
 
-	client := resty.New()
-	client.SetTimeout(30 * time.Second)
-	request := client.R().
-		SetHeader("Content-Type", "application/json").
-		SetBody(body)
-
-	util.SetAuthentication(request)
-
-	response, err := request.Post(viper.GetString("server.url") + "/v1/executions")
+	response, err := util.APIRequest().SetBody(body).Post("/v1/executions")
 
 	if err != nil {
 		return err
 	}
 
-	if response.StatusCode() != 200 {
-		return fmt.Errorf("server returned status code %d: %s", response.StatusCode(), response.String())
-	}
-
-	return nil
+	return util.CheckStatus(response)
 }

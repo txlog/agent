@@ -7,12 +7,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/fatih/color"
-	"github.com/go-resty/resty/v2"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/txlog/agent/util"
 )
 
@@ -143,8 +140,6 @@ func verifyDataIntegrity(machineId, hostname string) (*VerificationResult, error
 
 	// Check transaction items for each transaction on server
 	fmt.Fprintf(os.Stdout, "Verifying transaction items integrity...\n")
-	verifyClient := resty.New()
-	verifyClient.SetTimeout(30 * time.Second)
 	intersectionCount := 0
 	for _, serverID := range serverTransactionIDs {
 		// Skip verification if transaction doesn't exist locally
@@ -161,7 +156,7 @@ func verifyDataIntegrity(machineId, hostname string) (*VerificationResult, error
 		}
 
 		// Get server transaction details using the /v1/items endpoint
-		serverDetails, err := getServerTransactionItems(verifyClient, machineId, fmt.Sprintf("%d", serverID))
+		serverDetails, err := getServerTransactionItems(machineId, fmt.Sprintf("%d", serverID))
 		if err != nil {
 			color.Yellow("  ⚠ Warning: Could not get server details for transaction #%d: %v", serverID, err)
 			continue
@@ -231,24 +226,20 @@ func getLocalTransactionIDs() ([]int, error) {
 
 // getServerTransactionItems retrieves detailed information about a specific transaction from the server
 // using the /v1/items endpoint
-func getServerTransactionItems(httpClient *resty.Client, machineId, transactionID string) (*ServerTransaction, error) {
+func getServerTransactionItems(machineId, transactionID string) (*ServerTransaction, error) {
 	var transaction ServerTransaction
-	request := httpClient.R().
-		SetHeader("Content-Type", "application/json").
+	response, err := util.APIRequest().
 		SetQueryParam("machine_id", machineId).
 		SetQueryParam("transaction_id", transactionID).
-		SetResult(&transaction)
-
-	util.SetAuthentication(request)
-
-	response, err := request.Get(viper.GetString("server.url") + "/v1/items")
+		SetResult(&transaction).
+		Get("/v1/items")
 
 	if err != nil {
 		return nil, err
 	}
 
-	if response.StatusCode() != 200 {
-		return nil, fmt.Errorf("server returned status code %d: %s", response.StatusCode(), response.String())
+	if err := util.CheckStatus(response); err != nil {
+		return nil, err
 	}
 
 	return &transaction, nil

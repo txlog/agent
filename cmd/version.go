@@ -22,16 +22,6 @@ type ServerVersion struct {
 	Version string `json:"version"`
 }
 
-// ServerVersionError represents an error when fetching server version
-type ServerVersionError struct {
-	StatusCode int
-	Message    string
-}
-
-func (e *ServerVersionError) Error() string {
-	return e.Message
-}
-
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Show agent and server version number",
@@ -88,21 +78,12 @@ func init() {
 // GetServerVersionWithError retrieves the server version and returns detailed error information.
 // Returns the version string and any error encountered.
 // If successful, returns version and nil error.
-// If there's an authentication error, returns empty string and ServerVersionError with status code.
+// If there's an authentication error, returns empty string and an error naming
+// the credentials as the likely cause.
 // If there's a network error, returns empty string and the network error.
 func GetServerVersionWithError() (string, error) {
-	client := resty.New()
-	client.SetTimeout(30 * time.Second)
-	client.SetAllowGetMethodPayload(true)
-
 	var server ServerVersion
-	req := client.R().
-		SetHeader("Content-Type", "application/json").
-		SetResult(&server)
-
-	util.SetAuthentication(req)
-
-	resp, err := req.Get(viper.GetString("server.url") + "/v1/version")
+	resp, err := util.APIRequest().SetResult(&server).Get("/v1/version")
 
 	// Network error
 	if err != nil {
@@ -110,17 +91,11 @@ func GetServerVersionWithError() (string, error) {
 	}
 
 	// Authentication or other HTTP errors
-	if resp.StatusCode() != 200 {
-		if resp.StatusCode() == 401 {
-			return "", &ServerVersionError{
-				StatusCode: 401,
-				Message:    "authentication failed: invalid credentials (API key or username/password)",
-			}
-		}
-		return "", &ServerVersionError{
-			StatusCode: resp.StatusCode(),
-			Message:    fmt.Sprintf("server returned status %d", resp.StatusCode()),
-		}
+	if resp.StatusCode() == 401 {
+		return "", fmt.Errorf("authentication failed: invalid credentials (API key or username/password)")
+	}
+	if err := util.CheckStatus(resp); err != nil {
+		return "", err
 	}
 
 	return server.Version, nil
@@ -172,10 +147,6 @@ func ValidateServerVersionForAPIKey() error {
 
 	// If there's an error getting the version, return it directly
 	if err != nil {
-		// Check if it's an authentication error
-		if serverErr, ok := errors.AsType[*ServerVersionError](err); ok {
-			return serverErr
-		}
 		return err
 	}
 
