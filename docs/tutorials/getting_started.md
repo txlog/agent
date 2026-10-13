@@ -100,6 +100,9 @@ txlog verify
     you are good to go!
 * **Failure**: If it lists missing transactions, run `txlog build` again to
     sync them.
+* **Items that differ**: If it reports packages missing *and* extra on the same
+    transaction, the data is already on the server but was recorded differently,
+    usually by an older agent. Run `txlog build --force` to overwrite it.
 
 ## Next Steps
 

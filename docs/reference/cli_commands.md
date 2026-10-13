@@ -25,6 +25,17 @@ with the configured Txlog Server.
 txlog build [flags]
 ```
 
+**Flags:**
+
+| Flag | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `--force` | bool | `false` | Re-send every transaction, overwriting what is stored<br>on the server. Requires Txlog Server 1.38.0 or later. |
+
+By default the agent asks the server which transactions it already has and sends
+only the rest. With `--force` it sends all of them and the server replaces the
+stored transaction and its item list. Use it after an agent upgrade that changed
+how transaction data is parsed, instead of deleting the host from the server.
+
 **Exit Codes:**
 
 | Code | Description |

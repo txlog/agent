@@ -121,7 +121,10 @@ The verify command checks:
 - Transactions that exist locally but not on the server
 - Transaction items (packages) integrity for all synced transactions
 
-If issues are detected, run `txlog build` to synchronize the missing data.
+If issues are detected, run `txlog build` to synchronize the missing data. When
+verify reports items that differ rather than transactions that are absent, run
+`txlog build --force`: the transactions are already on the server, so a regular
+build skips them, and only a forced build overwrites their item list.
 
 ## MCP Server
 

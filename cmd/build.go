@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -57,7 +58,11 @@ var buildCmd = &cobra.Command{
 	Short: "Compile transaction info",
 	Long: `
 This command compiles all transactions listed on 'dnf history'
-command, and sends them to the server so they can be queried later.`,
+command, and sends them to the server so they can be queried later.
+
+By default only transactions the server does not have yet are sent. Use --force
+to re-send every transaction and overwrite what is stored, which is how a host
+recorded by an older agent is repaired without deleting its data.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		machineId, err := util.GetMachineId()
 		if err != nil {
@@ -88,7 +93,7 @@ command, and sends them to the server so they can be queried later.`,
 		// * compares the transaction lists to determine which transactions have not been sent to the server
 		// * sends the unsent transactions to the server, one at a time, with data extracted from `sudo dnf history info ID`
 		//    * The sending of the transaction and its details needs to be atomic
-		entriesProcessed, entriesSent, err := saveUnsentTransactions(machineId, hostname, savedTransactions)
+		entriesProcessed, entriesSent, err := saveUnsentTransactions(machineId, hostname, savedTransactions, buildForce)
 		if err != nil {
 			color.Red("✗ Error retrieving transactions: %v", err)
 			if execErr := saveExecution(false, machineId, hostname, err.Error(), 0, 0); execErr != nil {
@@ -118,7 +123,12 @@ command, and sends them to the server so they can be queried later.`,
 
 func init() {
 	rootCmd.AddCommand(buildCmd)
+	buildCmd.Flags().BoolVar(&buildForce, "force", false, "re-send every transaction, overwriting what is stored on the server")
 }
+
+// buildForce re-sends transactions the server already has. Kept as a package
+// variable because cobra binds flags before the command runs.
+var buildForce bool
 
 // getSavedTransactions retrieves transaction IDs from a remote server for a given machine ID and hostname.
 // It makes an HTTP GET request to the configured server endpoint with the machine ID and hostname as query parameters.
@@ -166,12 +176,14 @@ func getSavedTransactions(machineId, hostname string) ([]int, error) {
 //   - machineId: string identifier for the machine
 //   - hostname: system hostname
 //   - savedTransactions: slice of previously processed transaction IDs to avoid duplication
+//   - force: send every transaction, including the saved ones, asking the server
+//     to overwrite what it stores instead of ignoring the duplicate
 //
 // Returns:
 //   - int: total number of entries processed
 //   - int: number of new entries sent to server
 //   - error: any error encountered during execution
-func saveUnsentTransactions(machineId, hostname string, savedTransactions []int) (int, int, error) {
+func saveUnsentTransactions(machineId, hostname string, savedTransactions []int, force bool) (int, int, error) {
 	out, err := exec.Command(util.PackageBinary(), "history", "--reverse", "list").Output()
 	if err != nil {
 		return 0, 0, err
@@ -198,13 +210,17 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 		if matches != nil {
 			transactionID := strings.TrimSpace(matches[1])
 
-			if _, exists := savedSet[transactionID]; !exists {
+			_, saved := savedSet[transactionID]
+			if !saved || force {
 				details, err := getTransactionItems(transactionID)
 				if err != nil {
 					return 0, 0, err
 				}
 
 				response, err := util.APIRequest().
+					// Without this the server ignores a transaction it already
+					// has, so re-sending one would change nothing.
+					SetQueryParam("replace", strconv.FormatBool(force)).
 					SetBody(map[string]any{
 						"transaction_id":   transactionID,
 						"machine_id":       machineId,
@@ -231,8 +247,20 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int)
 					return 0, 0, err
 				}
 
+				// A server older than 1.38.0 ignores replace and answers 200 with
+				// this message, so the stored data is left untouched.
+				if saved && strings.Contains(response.String(), "Transaction already exists") {
+					color.Yellow("   ⚠ Transaction #%s not replaced: server does not support --force (requires 1.38.0 or later)", transactionID)
+					entriesProcessed++
+					continue
+				}
+
 				entriesSent++
-				color.Green("   ✓ Transaction #%s sent successfully", transactionID)
+				if saved {
+					color.Green("   ✓ Transaction #%s replaced successfully", transactionID)
+				} else {
+					color.Green("   ✓ Transaction #%s sent successfully", transactionID)
+				}
 			}
 			entriesProcessed++
 		}

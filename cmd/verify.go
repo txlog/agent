@@ -177,7 +177,7 @@ func verifyDataIntegrity(machineId, hostname string) (*VerificationResult, error
 			result.WithExtraItems = append(result.WithExtraItems, fmt.Sprintf("%d", serverID))
 			color.Yellow("  ⚠ Transaction #%d has %d extra package(s) on server", serverID, len(extra))
 			for _, pkg := range extra {
-				fmt.Fprintf(os.Stdout, "    + %s %s-%s.%s\n", pkg.Action, pkg.Name, pkg.Version, pkg.Arch)
+				fmt.Fprintf(os.Stdout, "    + %s %s-%s.%s (%s)\n", pkg.Action, pkg.Name, pkg.Version, pkg.Arch, pkg.Repo)
 			}
 		}
 
@@ -314,8 +314,14 @@ func printVerificationResults(result *VerificationResult) {
 	} else {
 		color.Red("\n✗ Data integrity issues detected!")
 		fmt.Fprintln(os.Stdout, "To fix these issues:")
-		fmt.Fprintln(os.Stdout, "  1. Remove the hostname data from the server")
-		fmt.Fprintln(os.Stdout, "  2. Run 'txlog build' to synchronize all data again")
+		if len(result.MissingOnServer) > 0 {
+			fmt.Fprintln(os.Stdout, "  • Run 'txlog build' to send the missing transactions")
+		}
+		// Items that differ are already stored, so a plain build would skip them.
+		if len(result.WithMissingItems) > 0 || len(result.WithExtraItems) > 0 {
+			fmt.Fprintln(os.Stdout, "  • Run 'txlog build --force' to overwrite the stored items")
+			fmt.Fprintln(os.Stdout, "    (requires Txlog Server 1.38.0 or later)")
+		}
 	}
 	fmt.Fprintln(os.Stdout)
 }

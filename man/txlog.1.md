@@ -30,7 +30,7 @@ system performance while ensuring accurate and timely data collection.
 # COMMANDS
 
 **build**
-: Compile transaction info
+: Compile transaction info. Accepts **--force**, described under FLAGS.
 
 **help**
 : You know what this option does
@@ -45,6 +45,13 @@ system performance while ensuring accurate and timely data collection.
 
 **--config**
 : config file (default is /etc/txlog.yaml)
+
+**--force**
+: Only for **build**. Re-send every transaction instead of just the ones the
+server is missing, asking the server to overwrite what it already stores. Use it
+to repair a host whose data was recorded by an older agent, without deleting the
+host from the server first. Requires Txlog Server 1.38.0 or later; against an
+older server the transactions are re-sent and silently ignored.
 
 **--help**
 : help for txlog. Use "txlog [command] --help" for more information about a command
@@ -158,8 +165,14 @@ The command provides color-coded output for easy identification of issues:
 - **Red (✗)**: Critical issues detected (missing transactions or items)
 - **Yellow (⚠)**: Warnings (extra items on server that don't exist locally)
 
-After running `txlog verify`, if any issues are detected, you can run `txlog build`
-to synchronize the missing data with the server.
+After running `txlog verify`, the fix depends on which issue was reported:
+
+* **Missing on server**: run `txlog build`. The transactions were never sent, so
+  a regular build picks them up.
+* **Missing or extra items**: run `txlog build --force`. The transactions are
+  already stored, so a regular build skips them; only a forced build overwrites
+  the item list. This is what an agent upgrade that changed how package names
+  are parsed leaves behind.
 
 **Exit Codes:**
 

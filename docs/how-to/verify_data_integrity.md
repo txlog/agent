@@ -37,17 +37,35 @@ Missing transactions: [100, 101, 102]
 txlog build
 ```
 
-### Case 3: Integrity Errors
+### Case 3: Missing or Extra Items
 
-If the output indicates a mismatch in package data (e.g., checksums don't
-match):
+If the output lists packages that differ between a stored transaction and the
+local history:
 
 ```text
-Transaction 50: Package mismatch ...
+✗ Transaction #49 is missing 34 package(s) on server
+⚠ Transaction #49 has 34 extra package(s) on server
 ```
 
-**Action**: This indicates a potential data corruption or a modification of the
-local history.
+Missing and extra counts that match, transaction after transaction, mean the
+same packages are recorded on both sides but described differently. That is the
+normal outcome of an agent upgrade that changed how package names are parsed.
 
-1. Check your local logs for tampering.
+**Action**: Overwrite what the server stores:
+
+```bash
+txlog build --force
+```
+
+A regular `txlog build` will not help here: the server already has these
+transactions, so it skips them. `--force` sends them anyway and the server
+replaces the stored item list. This requires Txlog Server 1.38.0 or later.
+
+### Case 4: Unexplained Mismatches
+
+If the differences do not line up with an agent upgrade, and the same package
+appears with genuinely different versions on each side, treat it as possible
+tampering with the local history:
+
+1. Check your local logs.
 2. Contact your system administrator if you suspect a security issue.

@@ -42,6 +42,14 @@ This ensures that:
 * We don't re-send data that is already safe.
 * We catch up on data if the agent hasn't run for a long time.
 
+The reconciliation assumes that a transaction stored on the server describes the
+same thing the local history describes. An agent upgrade that changes how DNF
+output is parsed breaks that assumption: the transaction IDs still match, so the
+diff is empty, while the stored package data no longer matches what the current
+agent would send. `txlog build --force` exists for that case. It skips the diff
+entirely and sends every transaction with a flag asking the server to replace
+what it stores, so a host can be repaired without deleting it first.
+
 ### 3. Atomic Transaction Uploads
 
 Each missing transaction is uploaded individually. A transaction includes:
