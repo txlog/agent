@@ -107,3 +107,58 @@ func TestParseAltered(t *testing.T) {
 		}
 	}
 }
+
+// TestParseTransactionDetail uses an excerpt of a real interrupted transaction:
+// dnf marks its items with "**" and they used to be dropped, leaving only the
+// "Reason Change" lines, which were split into action "Reason" and a package
+// named "Change kernel".
+func TestParseTransactionDetail(t *testing.T) {
+	out := `Transaction ID : 23
+Begin time     : Tue 12 May 2026 03:14:26 PM -03
+Begin rpmdb    : 7d6ead0ccf3d184b70d7b1a9ad4fd2cfb2ec6d1cd7e73d35926e615bbc508dee
+End time       : Wed 31 Dec 1969 09:00:00 PM -03 (-1778609666 seconds)
+End rpmdb      :
+User           : System <unset>
+Return-Code    : Failure: 1
+Releasever     :
+Command Line   : -y upgrade
+Persistence    : Unknown
+Comment        :
+Packages Altered:
+ ** Install       kernel-core-6.12.0-124.55.3.el10_1.x86_64                  @baseos
+ ** Upgrade       libpng-2:1.6.40-8.el10_1.3.x86_64                          @baseos
+ ** Upgraded      libpng-2:1.6.40-8.el10_1.2.x86_64                          @@System
+    Reason Change kernel-core-6.12.0-124.31.1.el10_1.x86_64                  @baseos
+ ** Removed       kernel-core-6.12.0-124.49.1.el10_1.x86_64                  @@System
+    Install       vim-common-2:9.1.083-6.el10_1.4.x86_64                     @appstream
+Scriptlet output:
+   1 Job for zabbix-proxy.service canceled.
+`
+	d, err := parseTransactionDetail(out)
+	if err != nil {
+		t.Fatalf("parseTransactionDetail: %v", err)
+	}
+
+	want := []Package{
+		{Action: "Install", Name: "kernel-core", Version: "6.12.0", Release: "124.55.3.el10_1", Arch: "x86_64", Repo: "baseos"},
+		{Action: "Upgrade", Name: "libpng", Version: "1.6.40", Release: "8.el10_1.3", Epoch: "2", Arch: "x86_64", Repo: "baseos"},
+		{Action: "Upgraded", Name: "libpng", Version: "1.6.40", Release: "8.el10_1.2", Epoch: "2", Arch: "x86_64", FromRepo: "System"},
+		{Action: "Reason Change", Name: "kernel-core", Version: "6.12.0", Release: "124.31.1.el10_1", Arch: "x86_64", Repo: "baseos"},
+		{Action: "Removed", Name: "kernel-core", Version: "6.12.0", Release: "124.49.1.el10_1", Arch: "x86_64", FromRepo: "System"},
+		{Action: "Install", Name: "vim-common", Version: "9.1.083", Release: "6.el10_1.4", Epoch: "2", Arch: "x86_64", Repo: "appstream"},
+	}
+	if len(d.PackagesAltered) != len(want) {
+		t.Fatalf("got %d packages, want %d: %+v", len(d.PackagesAltered), len(want), d.PackagesAltered)
+	}
+	for i, p := range d.PackagesAltered {
+		if p != want[i] {
+			t.Errorf("package %d: got %+v, want %+v", i, p, want[i])
+		}
+	}
+	if d.ReturnCode != "Failure: 1" {
+		t.Errorf("return code: got %q", d.ReturnCode)
+	}
+	if len(d.ScriptletOutput) != 1 || d.ScriptletOutput[0] != "1 Job for zabbix-proxy.service canceled." {
+		t.Errorf("scriptlet output: got %q", d.ScriptletOutput)
+	}
+}

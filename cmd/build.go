@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -48,8 +47,12 @@ var (
 	reHistoryLine      = regexp.MustCompile(`^\s*(\d+)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*$`)
 	reValidInput       = regexp.MustCompile(`^[0-9]+$`)
 	reTransactionField = regexp.MustCompile(`^(.+?)\s*:\s*(.+)$`)
-	rePackageInstall   = regexp.MustCompile(`^\s+(\w+)\s+(.+?)\s+@(.+)$`)
-	rePackageUpgraded  = regexp.MustCompile(`^\s+(\w+)\s+(.+?)\s+@@(.+)$`)
+	// One line of "Packages Altered". Dnf prefixes the items of a transaction
+	// that did not finish cleanly with "**"; their rpm changes may still have
+	// happened (dnf.rpm.log shows them), so they are kept rather than dropped.
+	// "Reason Change" is the only action made of two words. "@@repo" is the
+	// repository the package came from, "@repo" the one it was installed from.
+	rePackageLine = regexp.MustCompile(`^\s*(?:\*\*\s+)?(Reason Change|\w+)\s+(\S+)\s+(@@?)(\S+)\s*$`)
 )
 
 // buildCmd represents the build command
@@ -218,9 +221,10 @@ func saveUnsentTransactions(machineId, hostname string, savedTransactions []int,
 				}
 
 				response, err := util.APIRequest().
-					// Without this the server ignores a transaction it already
-					// has, so re-sending one would change nothing.
-					SetQueryParam("replace", strconv.FormatBool(force)).
+					// Always replace: a transaction missing from the saved list may
+					// still be stored, incomplete, and the server would otherwise
+					// ignore the new copy. --force only widens what is re-sent.
+					SetQueryParam("replace", "true").
 					SetBody(map[string]any{
 						"transaction_id":   transactionID,
 						"machine_id":       machineId,
@@ -287,32 +291,29 @@ func getTransactionItems(transactionID string) (TransactionDetail, error) {
 		return TransactionDetail{}, err
 	}
 
+	return parseTransactionDetail(string(out))
+}
+
+// parseTransactionDetail reads the output of 'dnf history info ID'.
+func parseTransactionDetail(out string) (TransactionDetail, error) {
 	var transaction TransactionDetail
 	var packages []Package
 	var scriptletOutput []string
-	for line := range strings.SplitSeq(string(out), "\n") {
-		if matches := rePackageInstall.FindStringSubmatch(line); matches != nil {
-			name, version, release, epoch, arch := util.SplitPackageName(strings.TrimSpace(matches[2]))
+	for line := range strings.SplitSeq(out, "\n") {
+		if matches := rePackageLine.FindStringSubmatch(line); matches != nil {
+			name, version, release, epoch, arch := util.SplitPackageName(matches[2])
 			pkg := Package{
-				Action:  strings.TrimSpace(matches[1]),
+				Action:  matches[1],
 				Name:    name,
 				Version: version,
 				Release: release,
 				Epoch:   epoch,
 				Arch:    arch,
-				Repo:    strings.TrimSpace(matches[3]),
 			}
-			packages = append(packages, pkg)
-		} else if matches := rePackageUpgraded.FindStringSubmatch(line); matches != nil {
-			name, version, release, epoch, arch := util.SplitPackageName(strings.TrimSpace(matches[2]))
-			pkg := Package{
-				Action:   strings.TrimSpace(matches[1]),
-				Name:     name,
-				Version:  version,
-				Release:  release,
-				Epoch:    epoch,
-				Arch:     arch,
-				FromRepo: strings.TrimSpace(matches[3]),
+			if matches[3] == "@@" {
+				pkg.FromRepo = matches[4]
+			} else {
+				pkg.Repo = matches[4]
 			}
 			packages = append(packages, pkg)
 		} else if strings.HasPrefix(line, "  ") {
